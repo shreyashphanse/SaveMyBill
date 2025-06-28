@@ -1,0 +1,6 @@
+#ignores node_modules and build folders globally
+**/node_modules/
+**/build/
+.env
+*.log
+.DS_Store
