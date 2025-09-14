@@ -1,65 +1,131 @@
-import React, { useState } from "react";
-import BottomNavBar from "../components/BottomNavBar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { useTheme } from "../(extraScreens)/ThemeContext";
-
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   Alert,
   Modal,
+  StyleSheet,
 } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import DropDownPicker from "react-native-dropdown-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { onAuthStateChanged } from "firebase/auth";
+import { useTheme } from "../(extraScreens)/ThemeContext";
+import BottomNavBar from "../components/BottomNavBar";
+import { API_BASE_URL } from "config/app";
+import { auth } from "../firebaseConfig";
+import { scheduleBillReminder } from "../utilities/notificationUtils";
 
 export default function UploadScreen({ navigation }: { navigation: any }) {
+  const { theme } = useTheme();
+
+  const [userId, setUserId] = useState<string | null>(null);
   const [file, setFile] = useState<any>(null);
+  const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [storeName, setStoreName] = useState("");
-  const { theme } = useTheme();
 
-  // Expiry date fields
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
 
-  // Dropdown state
   const [open, setOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [items, setItems] = useState([
-    { label: "Food", value: "1" },
-    { label: "Electronics", value: "2" },
-    { label: "Travel", value: "3" },
-    { label: "Shopping", value: "4" },
-    { label: "Health", value: "5" },
-  ]);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [items, setItems] = useState<any[]>([]);
 
   const [successModal, setSuccessModal] = useState(false);
 
-  // File picker
+  const OCR_API_URL = "http://10.151.103.24:5001/ocr";
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) setUserId(user.uid);
+      else setUserId(null);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/categories?userId=${userId}`
+        );
+        const data = await res.json();
+        if (res.ok) {
+          const dropdownItems = data.categories.map((cat: any) => ({
+            label: cat.name,
+            value: cat.id,
+            id: cat._id,
+          }));
+          setItems(dropdownItems);
+        } else {
+          console.error("Error fetching categories:", data.error);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetchCategories();
+  }, [userId]);
+
   const pickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "image/*",
         copyToCacheDirectory: true,
       });
-
       if (!result.canceled) {
         const fileAsset = result.assets[0];
-        setFile(fileAsset); // fileAsset has { uri, name, size, mimeType }
+        setFile(fileAsset);
+        await processOCR(fileAsset);
       }
     } catch (error) {
       Alert.alert("Error", "Could not pick file");
     }
   };
 
-  // Upload button handler
-  const handleUpload = () => {
+  const processOCR = async (fileAsset: any) => {
+    if (!fileAsset) return;
+    const formData = new FormData();
+    formData.append("file", {
+      uri: fileAsset.uri,
+      name: fileAsset.name,
+      type: fileAsset.mimeType || "image/jpeg",
+    } as any);
+
+    try {
+      const response = await fetch(OCR_API_URL, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (data.data.amount) setAmount(String(data.data.amount));
+        if (data.data.expiryDate) {
+          const parts = data.data.expiryDate.split(/[\/\-]/);
+          if (parts.length === 3) {
+            let [d, m, y] = parts;
+            if (y.length === 2) y = "20" + y;
+            setDay(d);
+            setMonth(m);
+            setYear(y);
+          }
+        }
+      } else {
+        Alert.alert("OCR failed", data.error || "Unknown error");
+      }
+    } catch (err) {
+      console.error("OCR Error:", err);
+      Alert.alert("OCR failed", "Server error");
+    }
+  };
+
+  const handleUpload = async () => {
     if (
       !file ||
       !amount ||
@@ -69,29 +135,78 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
       !year ||
       !storeName
     ) {
-      Alert.alert("Error", "Please fill all required fields.");
+      Alert.alert("Please fill all required fields");
       return;
     }
 
     const expiryDate = `${day}/${month}/${year}`;
+    const selectedCategoryObj = items.find(
+      (item) => item.value === selectedCategory
+    );
 
-    // TODO: Upload logic to DB here with expiryDate
+    const formData = new FormData();
+    formData.append("userId", userId!);
+    formData.append("title", title);
+    formData.append("amount", amount);
+    formData.append("category", selectedCategory);
+    formData.append("categoryName", selectedCategoryObj?.label || "Unknown");
+    formData.append("expiryDate", expiryDate);
+    formData.append("description", description);
+    formData.append("storeName", storeName);
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType || "image/jpeg",
+    } as any);
 
-    setSuccessModal(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/bills/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
 
-    setTimeout(() => {
-      setSuccessModal(false);
-
-      // Clear all input fields
-      setFile(null);
-      setAmount("");
-      setSelectedCategory(null);
-      setDay("");
-      setMonth("");
-      setYear("");
-      setStoreName("");
-      setDescription("");
-    }, 1500);
+      if (data.success) {
+        setSuccessModal(true);
+        setTimeout(() => {
+          setSuccessModal(false);
+          if (expiryDate) {
+            Alert.alert(
+              "Set Reminder?",
+              `This bill expires on ${expiryDate}. Do you want to set a reminder?`,
+              [
+                { text: "No", onPress: () => console.log("Reminder skipped") },
+                {
+                  text: "Yes",
+                  onPress: async () => {
+                    await scheduleBillReminder(
+                      expiryDate,
+                      data.billId,
+                      storeName
+                    );
+                  },
+                },
+              ]
+            );
+          }
+          // Reset
+          setFile(null);
+          setAmount("");
+          setSelectedCategory(null);
+          setDay("");
+          setMonth("");
+          setYear("");
+          setStoreName("");
+          setDescription("");
+          setTitle("");
+        }, 1500);
+      } else {
+        Alert.alert("Upload failed", data.error || "Unknown error");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Upload failed", "Server error");
+    }
   };
 
   return (
@@ -101,14 +216,18 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           Upload Screen
         </Text>
 
-        {/* File Picker */}
         <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
           <Text style={styles.fileText}>
             {file ? file.name : "Choose Bill Photo"}
           </Text>
         </TouchableOpacity>
 
-        {/* Bill Amount */}
+        <TextInput
+          style={styles.input}
+          placeholder="Enter Bill Title"
+          value={title}
+          onChangeText={setTitle}
+        />
         <TextInput
           style={styles.input}
           placeholder="Enter Bill Amount"
@@ -117,7 +236,6 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           onChangeText={setAmount}
         />
 
-        {/* Dropdown */}
         <DropDownPicker
           open={open}
           value={selectedCategory}
@@ -125,12 +243,21 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           setOpen={setOpen}
           setValue={setSelectedCategory}
           setItems={setItems}
-          placeholder="Select Category"
+          placeholder={
+            items.length ? "Select Category" : "No categories available"
+          }
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownContainer}
         />
 
-        {/* Expiry Date Row */}
+        <Text style={{ padding: 5, fontSize: 20 }}>Expiry Date:</Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+          value={day && month && year ? `${day}/${month}/${year}` : ""}
+          editable={false}
+          placeholder="Detected Expiry Date"
+        />
+
         <View style={styles.dateRow}>
           <TextInput
             style={[styles.input, styles.dateInput]}
@@ -158,7 +285,6 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           />
         </View>
 
-        {/* Description & Store Name */}
         <TextInput
           style={styles.input}
           placeholder="Description (optional)"
@@ -172,7 +298,6 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           onChangeText={setStoreName}
         />
 
-        {/* Upload Button */}
         <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
           <Text style={styles.uploadText}>Upload</Text>
         </TouchableOpacity>
@@ -184,72 +309,21 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
         transparent={true}
         onRequestClose={() => setSuccessModal(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)", // dimmed overlay
-          }}
-        >
-          <View
-            style={{
-              width: "70%",
-              padding: 20,
-              backgroundColor: "white",
-              borderRadius: 15,
-              alignItems: "center",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "800",
-                textAlign: "center",
-              }}
-            >
-              ✅ Uploaded successfully
-            </Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.checkmark}>✅</Text>
+            <Text style={styles.modalText}>Uploaded successfully</Text>
           </View>
         </View>
       </Modal>
 
-      {/* Bottom NavBar ALWAYS at bottom */}
       <BottomNavBar currentScreen="Upload" navigation={navigation} />
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    color: "darkblue",
-    fontWeight: "600",
-    marginBottom: 20,
-  },
-  filePicker: {
-    borderWidth: 1,
-    backgroundColor: "#fff",
-    borderColor: "#6A5ACD",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  fileText: {
-    color: "#333",
-    fontSize: 16,
-  },
+  title: { fontSize: 28, fontWeight: "600", marginBottom: 20 },
   input: {
     borderWidth: 1,
     borderColor: "#6A5ACD",
@@ -259,23 +333,24 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  dropdown: {
+  filePicker: {
+    borderWidth: 1,
     borderColor: "#6A5ACD",
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
     marginBottom: 15,
+    alignItems: "center",
   },
-  dropdownContainer: {
-    borderColor: "#6A5ACD",
-  },
+  fileText: { color: "#333", fontSize: 16 },
+  dropdown: { borderColor: "#6A5ACD", marginBottom: 15 },
+  dropdownContainer: { borderColor: "#6A5ACD" },
   dateRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 15,
   },
-  dateInput: {
-    flex: 1,
-    marginHorizontal: 5,
-    textAlign: "center",
-  },
+  dateInput: { flex: 1, marginHorizontal: 5, textAlign: "center" },
   uploadButton: {
     backgroundColor: "#003366",
     paddingVertical: 15,
@@ -284,16 +359,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
   },
-  uploadText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  uploadText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
     backgroundColor: "#fff",
@@ -301,13 +372,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
   },
-  checkmark: {
-    fontSize: 40,
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "green",
-  },
+  checkmark: { fontSize: 40, marginBottom: 10 },
+  modalText: { fontSize: 18, fontWeight: "600", color: "green" },
 });

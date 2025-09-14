@@ -1,89 +1,106 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import BottomNavBar from "../components/BottomNavBar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useTheme } from "../(extraScreens)/ThemeContext";
+import { useUser } from "../(extraScreens)/UserContext";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
+  FlatList,
   Modal,
   TextInput,
   Alert,
   BackHandler,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../(extraScreens)/ThemeContext";
+import { API_BASE_URL } from "../../config/app";
+import { useCategory } from "src/components/categoryContext";
+
+type Category = {
+  _id: string;
+  name: string;
+  amount: number;
+  bills: number;
+};
 
 export default function CategoriesScreen({ navigation }: { navigation: any }) {
-  const [open, setOpen] = useState(false);
   const { theme } = useTheme();
-  const [sortBy, setSortBy] = useState("az");
-  const [items, setItems] = useState([
+  const { user } = useUser();
+  const userId = user?.uid;
+  const { setCategoryDict } = useCategory(); // ✅ context function
+
+  // State
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // Sort dropdown
+  const [sortOpen, setSortOpen] = useState(false);
+  const [sortValue, setSortValue] = useState("az");
+  const [sortItems, setSortItems] = useState([
     { label: "A - Z", value: "az" },
     { label: "Total Amount", value: "amount" },
     { label: "No. of Bills", value: "bills" },
   ]);
 
-  // Categories data
-  const [categories, setCategories] = useState([
-    { id: "1", name: "Food", amount: 4500, bills: 12 },
-    { id: "2", name: "Electronics", amount: 12000, bills: 5 },
-    { id: "3", name: "Travel", amount: 8000, bills: 7 },
-    { id: "4", name: "Shopping", amount: 9500, bills: 9 },
-    { id: "5", name: "Health", amount: 3000, bills: 4 },
-  ]);
-
-  // Selection state
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-
-  // Modal state for adding category
+  // Add Category modal
   const [modalVisible, setModalVisible] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryAmount, setNewCategoryAmount] = useState("");
-  const [newCategoryBills, setNewCategoryBills] = useState("");
+  const [successModal, setSuccessModal] = useState(false);
 
-  // Back button handler for Android
+  // Fetch categories
+  const fetchCategories = async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/categories?userId=${userId}`
+      );
+      const data = await res.json();
+      const raw = Array.isArray(data?.categories) ? data.categories : [];
+
+      const mapped: Category[] = raw.map((cat: any, idx: number) => {
+        const _id = cat._id ?? cat.id ?? String(idx);
+        return {
+          _id,
+          name: cat.name ?? "Unnamed",
+          amount: cat.totalAmount ?? cat.amount ?? 0,
+          bills: cat.bills ?? cat.billsCount ?? cat.numBills ?? 0,
+        };
+      });
+
+      // ✅ Build dictionary and update context
+      const dict: Record<string, string> = {};
+      mapped.forEach((c) => {
+        dict[c.name] = c._id;
+      });
+      setCategoryDict(dict);
+
+      // ✅ Update local categories state
+      setCategories(mapped);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      Alert.alert("Error", "Could not fetch categories");
+    }
+  };
+
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      () => {
-        if (isSelectionMode) {
-          setIsSelectionMode(false);
-          setSelectedCategories([]);
-          return true;
-        }
-        return false;
-      }
-    );
-    return () => backHandler.remove();
-  }, [isSelectionMode]);
+    fetchCategories();
+  }, [userId]);
 
-  // Sort categories
-  const sortedCategories = [...categories].sort((a, b) => {
-    if (sortBy === "az") return a.name.localeCompare(b.name);
-    if (sortBy === "amount") return b.amount - a.amount;
-    if (sortBy === "bills") return b.bills - a.bills;
-    return 0;
-  });
-
-  // Handle long press on category
   const handleLongPress = (id: string) => {
     setIsSelectionMode(true);
     toggleSelection(id);
   };
 
-  // Select/unselect category
   const toggleSelection = (id: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((catId) => catId !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
   };
 
-  // Delete selected categories
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedCategories.length === 0) {
       Alert.alert(
         "No categories selected",
@@ -91,104 +108,177 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
       );
       return;
     }
-    setCategories((prev) =>
-      prev.filter((cat) => !selectedCategories.includes(cat.id))
-    );
-    setSelectedCategories([]);
-    setIsSelectionMode(false);
+
+    try {
+      for (const categoryId of selectedCategories) {
+        const res = await fetch(
+          `${API_BASE_URL}/api/categories/${categoryId}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to delete category ${categoryId}: ${text}`);
+        }
+      }
+
+      // Remove from local state
+      setCategories((prev) =>
+        prev.filter((cat) => !selectedCategories.includes(cat._id))
+      );
+
+      // Remove from shared context
+      setCategoryDict((prev) => {
+        const copy = { ...prev };
+        selectedCategories.forEach((id) => {
+          const key = Object.keys(copy).find((k) => copy[k] === id);
+          if (key) delete copy[key];
+        });
+        return copy;
+      });
+
+      setSelectedCategories([]);
+      setIsSelectionMode(false);
+
+      setSuccessModal(true);
+      setTimeout(() => setSuccessModal(false), 1500);
+    } catch (err) {
+      console.error("Error deleting categories:", err);
+      Alert.alert("Error", "Failed to delete selected categories");
+    }
   };
 
-  // Add new category
-  const handleAddCategory = () => {
-    if (!newCategoryName || !newCategoryAmount || !newCategoryBills) {
-      Alert.alert("Error", "Please enter all fields");
+  const handleAddCategory = async () => {
+    if (!newCategoryName?.trim()) {
+      Alert.alert("Error", "Please enter category name");
       return;
     }
-    const newCategory = {
-      id: Date.now().toString(),
-      name: newCategoryName,
-      amount: parseInt(newCategoryAmount),
-      bills: parseInt(newCategoryBills),
-    };
-    setCategories([...categories, newCategory]);
-    setModalVisible(false);
-    setNewCategoryName("");
-    setNewCategoryAmount("");
-    setNewCategoryBills("");
+    if (!userId) {
+      Alert.alert("Error", "User not logged in");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/categories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCategoryName.trim(), userId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Add category failed:", data);
+        Alert.alert("Error", data?.error || data?.message || "Failed to add");
+        return;
+      }
+
+      await fetchCategories();
+      setModalVisible(false);
+      setNewCategoryName("");
+    } catch (err) {
+      console.error("Error adding category:", err);
+      Alert.alert("Error", "Failed to add category");
+    }
   };
+
+  const sortedCategories = useMemo(() => {
+    const copy = [...categories];
+    if (sortValue === "az") copy.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortValue === "amount") copy.sort((a, b) => b.amount - a.amount);
+    else if (sortValue === "bills") copy.sort((a, b) => b.bills - a.bills);
+    return copy;
+  }, [categories, sortValue]);
+
+  useEffect(() => {
+    const backAction = () => {
+      if (isSelectionMode) {
+        setIsSelectionMode(false);
+        setSelectedCategories([]);
+        return true;
+      }
+      return false;
+    };
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, [isSelectionMode]);
 
   return (
     <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-        {/* Screen title */}
-        <Text style={[styles.title, { color: theme.text.primary }]}>
+        <Text style={[styles.title, { color: theme.text?.primary ?? "#000" }]}>
           Category Screen
         </Text>
 
-        {/* Dropdown for sorting */}
-        <View style={styles.dropdownWrapper}>
+        {/* Sort dropdown */}
+        <View style={{ zIndex: 1000, marginBottom: 15 }}>
           <DropDownPicker
-            open={open}
-            value={sortBy}
-            items={items}
-            setOpen={setOpen}
-            setValue={setSortBy}
-            setItems={setItems}
+            open={sortOpen}
+            value={sortValue}
+            items={sortItems}
+            setOpen={setSortOpen}
+            setValue={setSortValue}
+            setItems={setSortItems}
+            placeholder="Sort categories"
             style={styles.dropdown}
             dropDownContainerStyle={styles.dropdownContainer}
           />
         </View>
 
-        {/* List of categories */}
+        {/* List */}
         <FlatList
           data={sortedCategories}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              onLongPress={() => handleLongPress(item.id)}
-              delayLongPress={2000}
+              onLongPress={() => handleLongPress(item._id)}
+              delayLongPress={800}
               onPress={() => {
-                if (isSelectionMode) toggleSelection(item.id);
+                if (isSelectionMode) toggleSelection(item._id);
               }}
             >
               <View
                 style={[
-                  styles.categoryCard,
-                  selectedCategories.includes(item.id) && styles.selectedCard,
+                  styles.card,
+                  selectedCategories.includes(item._id) && styles.selectedCard,
                 ]}
               >
-                <Text style={styles.categoryName}>{item.name}</Text>
-                <Text style={styles.categoryAmount}>₹{item.amount}</Text>
-                <Text style={styles.categoryBills}>{item.bills} Bills</Text>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardDetails}>₹{item.amount}</Text>
+                <Text style={styles.cardDetails}>{item.bills} Bills</Text>
               </View>
             </TouchableOpacity>
           )}
-          contentContainerStyle={{
-            paddingTop: 80,
-            paddingHorizontal: 5,
-            paddingBottom: 120,
-          }}
+          contentContainerStyle={{ paddingBottom: 120 }}
         />
 
-        {/* + Button */}
+        {/* Add button */}
         {!isSelectionMode && (
           <TouchableOpacity
             style={styles.fab}
             onPress={() => setModalVisible(true)}
           >
-            <Text style={styles.fabText}>+</Text>
+            <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
+              +
+            </Text>
           </TouchableOpacity>
         )}
 
-        {/* Delete Button */}
+        {/* Delete button */}
         {isSelectionMode && (
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteText}>Delete</Text>
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>
+              Delete Selected ({selectedCategories.length})
+            </Text>
           </TouchableOpacity>
         )}
 
-        {/* Modal to add category */}
-        <Modal visible={modalVisible} animationType="slide" transparent>
+        {/* Add modal */}
+        <Modal visible={modalVisible} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Add Category</Text>
@@ -197,20 +287,6 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
                 placeholder="Category Name"
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Total Amount"
-                keyboardType="numeric"
-                value={newCategoryAmount}
-                onChangeText={setNewCategoryAmount}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="No. of Bills"
-                keyboardType="numeric"
-                value={newCategoryBills}
-                onChangeText={setNewCategoryBills}
               />
               <TouchableOpacity
                 style={styles.modalButton}
@@ -227,65 +303,56 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
             </View>
           </View>
         </Modal>
+
+        {/* Success modal */}
+        <Modal visible={successModal} animationType="fade" transparent={true}>
+          <View style={styles.successOverlay}>
+            <View style={styles.successContent}>
+              <Text style={styles.successText}>✅ Category deleted</Text>
+            </View>
+          </View>
+        </Modal>
       </View>
+
       <BottomNavBar currentScreen="Category" navigation={navigation} />
     </SafeAreaProvider>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
-    justifyContent: "flex-start",
-  },
   title: {
     fontSize: 28,
     color: "darkblue",
     fontWeight: "600",
-    marginBottom: 15,
-  },
-  dropdownWrapper: {
-    position: "absolute",
-    top: 65,
-    left: 15,
-    right: 15,
-    zIndex: 1000,
-    elevation: 1000,
+    marginBottom: 20,
   },
   dropdown: {
     borderColor: "#6A5ACD",
-    backgroundColor: "#fff",
+    borderRadius: 10,
   },
   dropdownContainer: {
     borderColor: "#6A5ACD",
+    borderRadius: 10,
   },
-  categoryCard: {
-    backgroundColor: "#E6E6FA",
+  card: {
+    backgroundColor: "#c9c5eaff",
     borderRadius: 12,
     padding: 20,
     marginBottom: 15,
-    borderWidth: 2,
-    borderColor: "#6A5ACD",
+    borderWidth: 1,
+    borderColor: "#513fc3ff",
   },
   selectedCard: {
     backgroundColor: "#D8BFD8",
   },
-  categoryName: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
   },
-  categoryAmount: {
+  cardDetails: {
     fontSize: 16,
-    marginTop: 5,
     color: "#555",
-  },
-  categoryBills: {
-    fontSize: 14,
-    marginTop: 3,
-    color: "#777",
+    marginTop: 5,
   },
   fab: {
     position: "absolute",
@@ -297,31 +364,36 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 5,
-  },
-  fabText: {
-    color: "#fff",
-    fontSize: 30,
-    fontWeight: "bold",
+    elevation: 6,
   },
   deleteButton: {
     position: "absolute",
     bottom: 20,
-    right: 20,
+    right: 100,
     backgroundColor: "#c70000",
     paddingVertical: 15,
     paddingHorizontal: 25,
     borderRadius: 30,
     elevation: 5,
   },
-  deleteText: {
+  deleteButtonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
+  input: {
+    borderWidth: 1,
+    borderColor: "#6A5ACD",
+    backgroundColor: "#fff",
+    padding: 12,
+    width: "100%",
+    borderRadius: 10,
+    marginBottom: 10,
+    fontSize: 16,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -337,14 +409,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 15,
   },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
   modalButton: {
     backgroundColor: "#003366",
     paddingVertical: 12,
@@ -358,5 +422,30 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  // success modal
+  successOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  successContent: {
+    width: "70%",
+    padding: 20,
+    backgroundColor: "white",
+    borderRadius: 15,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  successText: {
+    fontSize: 20,
+    fontWeight: "800",
+    textAlign: "center",
+    color: "green",
   },
 });

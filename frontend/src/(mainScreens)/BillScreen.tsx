@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import BottomNavBar from "../components/BottomNavBar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useTheme } from "../(extraScreens)/ThemeContext";
-
+import { BackHandler } from "react-native";
+import { API_BASE_URL } from "../../config/app";
 import {
   View,
   Text,
@@ -12,31 +13,34 @@ import {
   FlatList,
   Image,
   Modal,
+  Alert,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
-import { AntDesign } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useUser } from "../(extraScreens)/UserContext";
+import { useCategory } from "src/components/categoryContext";
 
 export default function BillScreen({ navigation }: { navigation: any }) {
+  const { theme } = useTheme();
+  const { user } = useUser();
+  const userId = user?.uid;
+  const { categoryDict } = useCategory(); // ✅ get dictionary from context
+
   const handleaddbill = () => {
     navigation?.navigate?.("Upload");
   };
-  const [search, setSearch] = useState("");
-  const { theme } = useTheme();
 
-  // Filter dropdown
+  const [search, setSearch] = useState("");
+
+  // Bills
+  const [bills, setBills] = useState<any[]>([]);
+
+  // Dropdown & sort states
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterValue, setFilterValue] = useState("all");
-  const [filterItems, setFilterItems] = useState([
-    { label: "All", value: "all" },
-    { label: "Food", value: "food" },
-    { label: "Electronics", value: "electronics" },
-    { label: "Travel", value: "travel" },
-    { label: "Shopping", value: "shopping" },
-    { label: "Health", value: "health" },
-  ]);
+  const [filterItems, setFilterItems] = useState<
+    { label: string; value: string }[]
+  >([]);
 
-  // Sort dropdown
   const [sortOpen, setSortOpen] = useState(false);
   const [sortValue, setSortValue] = useState("az");
   const [sortItems, setSortItems] = useState([
@@ -45,47 +49,99 @@ export default function BillScreen({ navigation }: { navigation: any }) {
     { label: "Expiry Date", value: "expiry" },
   ]);
 
-  // Modal state
+  // Selection & modal
+  const [selectedBills, setSelectedBills] = useState<string[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedBill, setSelectedBill] = useState<any>(null);
 
-  // Dummy bills
-  const bills = [
-    {
-      id: "1",
-      title: "Pizza Hut",
-      details: "Food - ₹450",
-      amount: 450,
-      category: "food",
-      date: "05/09/2025",
-      image: "https://via.placeholder.com/300",
-    },
-    {
-      id: "2",
-      title: "Amazon",
-      details: "Electronics - ₹2000",
-      amount: 2000,
-      category: "electronics",
-      date: "02/09/2025",
-      image: "https://via.placeholder.com/300",
-    },
-    {
-      id: "3",
-      title: "Apollo Pharmacy",
-      details: "Health - ₹750",
-      amount: 750,
-      category: "health",
-      date: "01/09/2025",
-      image: "https://via.placeholder.com/300",
-    },
-  ];
+  // Populate filterItems from categoryDict
+  useEffect(() => {
+    const items = [
+      { label: "All", value: "all" },
+      ...Object.entries(categoryDict).map(([name, _id]) => ({
+        label: name,
+        value: _id,
+      })),
+    ];
+    setFilterItems(items);
+  }, [categoryDict]);
 
-  // Apply search + filter + sort
+  // Close filter dropdown when items update
+  useEffect(() => {
+    setFilterOpen(false);
+  }, [filterItems]);
+
+  // Fetch bills
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_BASE_URL}/api/bills?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const billsArray = data.bills || [];
+        const mappedBills = billsArray.map((bill: any) => ({
+          id: bill._id,
+          title: bill.title,
+          amount: bill.amount,
+          categoryId: bill.category,
+          categoryName:
+            bill.categoryName ??
+            Object.keys(categoryDict).find(
+              (name) => categoryDict[name] === bill.category
+            ) ??
+            "Unknown",
+          date: bill.expiryDate,
+          image: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
+          details: `${bill.categoryName ?? ""} - ₹${bill.amount}`,
+        }));
+        setBills(mappedBills);
+      })
+      .catch((err) => console.error("Error fetching bills:", err));
+  }, [userId, categoryDict]);
+
+  // Handle long press on bills
+  const handleLongPress = (id: string) => {
+    setIsSelectionMode(true);
+    toggleSelection(id);
+  };
+
+  // Toggle selection
+  const toggleSelection = (id: string) => {
+    setSelectedBills((prev) =>
+      prev.includes(id) ? prev.filter((billId) => billId !== id) : [...prev, id]
+    );
+  };
+
+  // Delete bills
+  const handleDelete = async () => {
+    if (selectedBills.length === 0) {
+      Alert.alert("No bills selected", "Please select bills to delete.");
+      return;
+    }
+    try {
+      for (const id of selectedBills) {
+        const res = await fetch(`${API_BASE_URL}/api/bills/${id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) throw new Error(`Failed to delete bill ${id}`);
+      }
+      setBills((prev) =>
+        prev.filter((bill) => !selectedBills.includes(bill.id))
+      );
+      setSelectedBills([]);
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error("Error deleting bills:", error);
+      Alert.alert("Error", "Failed to delete bills.");
+    }
+  };
+
+  // Filter + search + sort
   const filteredBills = useMemo(() => {
     let data = [...bills];
 
-    // Filter
+    // Filter by category
     if (filterValue !== "all") {
-      data = data.filter((bill) => bill.category === filterValue);
+      data = data.filter((bill) => bill.categoryId === filterValue);
     }
 
     // Search
@@ -94,35 +150,49 @@ export default function BillScreen({ navigation }: { navigation: any }) {
       data = data.filter(
         (bill) =>
           bill.title.toLowerCase().includes(lowerSearch) ||
-          bill.details.toLowerCase().includes(lowerSearch)
+          bill.categoryName.toLowerCase().includes(lowerSearch) ||
+          bill.amount.toString().includes(lowerSearch)
       );
     }
 
     // Sort
-    if (sortValue === "az") {
-      data.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortValue === "amount") {
-      data.sort((a, b) => b.amount - a.amount);
-    } else if (sortValue === "expiry") {
+    if (sortValue === "az") data.sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortValue === "amount") data.sort((a, b) => b.amount - a.amount);
+    else if (sortValue === "expiry")
       data.sort(
         (a, b) =>
           new Date(b.date.split("/").reverse().join("-")).getTime() -
           new Date(a.date.split("/").reverse().join("-")).getTime()
       );
-    }
 
     return data;
   }, [bills, filterValue, search, sortValue]);
 
+  // Exit delete mode on back button
+  useEffect(() => {
+    const backAction = () => {
+      if (isSelectionMode) {
+        setIsSelectionMode(false);
+        setSelectedBills([]);
+        return true;
+      }
+      return false;
+    };
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, [isSelectionMode]);
+
   return (
     <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
       <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-        {/* Title */}
         <Text style={[styles.title, { color: theme.text.primary }]}>
-          My Bills
+          {" "}
+          My Bills{" "}
         </Text>
 
-        {/* Search Bar */}
         <TextInput
           style={styles.searchBar}
           placeholder="Search bills..."
@@ -130,7 +200,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
           onChangeText={setSearch}
         />
 
-        {/* Filter Dropdown */}
+        {/* Filter */}
         <View style={{ zIndex: 2000, marginBottom: 15 }}>
           <DropDownPicker
             open={filterOpen}
@@ -145,7 +215,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
           />
         </View>
 
-        {/* Sort Dropdown */}
+        {/* Sort */}
         <View style={{ zIndex: 1000, marginBottom: 15 }}>
           <DropDownPicker
             open={sortOpen}
@@ -160,13 +230,27 @@ export default function BillScreen({ navigation }: { navigation: any }) {
           />
         </View>
 
-        {/* Bills List */}
+        {/* Bills list */}
         <FlatList
           data={filteredBills}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => setSelectedBill(item)}>
-              <View style={styles.card}>
+            <TouchableOpacity
+              onLongPress={() => handleLongPress(item.id)}
+              delayLongPress={1000}
+              onPress={() => {
+                if (isSelectionMode) toggleSelection(item.id);
+                else setSelectedBill(item);
+              }}
+            >
+              <View
+                style={[
+                  styles.card,
+                  selectedBills.includes(item.id) && {
+                    backgroundColor: "#D8BFD8",
+                  },
+                ]}
+              >
                 <Image source={{ uri: item.image }} style={styles.cardImage} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
@@ -179,14 +263,25 @@ export default function BillScreen({ navigation }: { navigation: any }) {
           contentContainerStyle={{ paddingBottom: 100 }}
         />
 
-        {/* Floating Add Button */}
+        {/* Add Button */}
         <TouchableOpacity style={styles.fab} onPress={handleaddbill}>
           <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
-            +
+            {" "}
+            +{" "}
           </Text>
         </TouchableOpacity>
 
-        {/* Full Screen Bill Modal */}
+        {/* Delete Button */}
+        {isSelectionMode && (
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>
+              {" "}
+              Delete Selected ({selectedBills.length}){" "}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Modal */}
         <Modal visible={!!selectedBill} transparent animationType="slide">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -198,10 +293,12 @@ export default function BillScreen({ navigation }: { navigation: any }) {
                   />
                   <Text style={styles.modalTitle}>{selectedBill.title}</Text>
                   <Text style={styles.modalDetails}>
-                    {selectedBill.details}
+                    {" "}
+                    {selectedBill.details}{" "}
                   </Text>
                   <Text style={styles.modalDetails}>
-                    Expiry Date: {selectedBill.date}
+                    {" "}
+                    Expiry Date: {selectedBill.date}{" "}
                   </Text>
                 </>
               )}
@@ -215,24 +312,14 @@ export default function BillScreen({ navigation }: { navigation: any }) {
           </View>
         </Modal>
       </View>
+
       <BottomNavBar currentScreen="Bill" navigation={navigation} />
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 20,
-    paddingTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    color: "darkblue",
-    fontWeight: "600",
-    marginBottom: 20,
-  },
+  title: { fontSize: 28, fontWeight: "600", marginBottom: 20 },
   searchBar: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -242,10 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: "#f9f9f9",
   },
-  dropdown: {
-    borderColor: "#6A5ACD",
-    borderRadius: 10,
-  },
+  dropdown: { borderColor: "#6A5ACD", borderRadius: 10 },
   dropdownContainer: {
     borderColor: "#6A5ACD",
     borderRadius: 10,
@@ -265,27 +349,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  cardImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    marginRight: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  cardDetails: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 2,
-  },
-  cardDate: {
-    fontSize: 13,
-    color: "darkblue",
-    marginTop: 4,
-  },
+  cardImage: { width: 60, height: 60, borderRadius: 10, marginRight: 12 },
+  cardTitle: { fontSize: 18, fontWeight: "600", color: "#333" },
+  cardDetails: { fontSize: 14, color: "#666", marginTop: 2 },
+  cardDate: { fontSize: 13, color: "darkblue", marginTop: 4 },
   fab: {
     position: "absolute",
     bottom: 20,
@@ -315,33 +382,31 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
   },
-  modalImage: {
-    width: 250,
-    height: 250,
-    borderRadius: 12,
-    marginBottom: 15,
+  modalImage: { width: 250, height: 250, borderRadius: 12, marginBottom: 15 },
+  deleteButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 100,
+    backgroundColor: "#c70000",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    elevation: 5,
   },
+  deleteButtonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   modalTitle: {
     fontSize: 22,
     fontWeight: "700",
     color: "darkblue",
     marginBottom: 10,
   },
-  modalDetails: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 5,
-  },
+  modalDetails: { fontSize: 16, color: "#555", marginBottom: 5 },
   closeButton: {
     marginTop: 15,
-    backgroundColor: "blue",
+    backgroundColor: "#003366",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
   },
-  closeButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  closeButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

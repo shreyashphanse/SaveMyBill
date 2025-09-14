@@ -1,7 +1,9 @@
 // HomeScreen.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import BottomNavBar from "../components/BottomNavBar";
 import { useTheme } from "../(extraScreens)/ThemeContext";
+import { useUser } from "../(extraScreens)/UserContext";
+import { API_BASE_URL } from "../../config/app";
 import {
   View,
   Text,
@@ -16,15 +18,15 @@ import {
   ScrollView,
   StatusBar,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 const screenWidth = Dimensions.get("window").width;
 const cardWidth = screenWidth - 46;
 
 type Bill = {
-  id: string;
+  _id: string;
   name?: string;
   date: string; // "DD/MM/YYYY"
   amount: string;
@@ -32,73 +34,124 @@ type Bill = {
   imageUri?: string | null;
   description?: string;
 };
-export default function HomeScreen({
-  navigation,
-  route,
-  fallbackName = "User",
-}: any) {
-  const [userName, setUserName] = useState<string>(fallbackName);
-  const [searchText, setSearchText] = useState("");
+
+export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
   const { theme } = useTheme();
-
-  const [recentBills, setRecentBills] = useState<Bill[]>([
-    {
-      id: "b1",
-      name: "Groceries",
-      date: "03/09/2025",
-      amount: "1299",
-      category: "Food",
-      imageUri: "https://via.placeholder.com/120",
-      description: "Weekly groceries",
-    },
-    {
-      id: "b2",
-      name: "Phone Bill",
-      date: "01/09/2025",
-      amount: "499",
-      category: "Utilities",
-      imageUri: "https://via.placeholder.com/120",
-      description: "Monthly prepaid recharge",
-    },
-    {
-      id: "b3",
-      name: "Headphones",
-      date: "28/08/2025",
-      amount: "2499",
-      category: "Electronics",
-      imageUri: "https://via.placeholder.com/120",
-      description: "Noise cancelling headphones",
-    },
-  ]);
-
-  const totalSpentThisMonth = "₹ 4,297";
-  const numBillsUploaded = `${recentBills.length}`;
-  const highestSpendingCategory = "Electronics";
-  const upcomingExpiringBills = recentBills.filter((b) => {
-    return b.id === "b3" || b.id === "b2";
-  });
-
+  const { user } = useUser();
+  const [name, setName] = useState<string>(fallbackName);
+  const [search, setSearch] = useState("");
+  const [recentBills, setRecentBills] = useState<Bill[]>([]);
   const [cardDetailModalVisible, setCardDetailModalVisible] = useState(false);
   const [cardDetailContent, setCardDetailContent] = useState<any>(null);
-
   const [expiryListModalVisible, setExpiryListModalVisible] = useState(false);
-
   const [billDetailModalVisible, setBillDetailModalVisible] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [totalBillsCount, setTotalBillsCount] = useState(0);
+  const [allBills, setAllBills] = useState<Bill[]>([]);
+  const userId = user?.uid;
 
-  // Cards data
+  // Fetch latest 10 bills from backend
+  useEffect(() => {
+    const fetchBills = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bills?userId=${userId}`);
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error("Backend did not return JSON:", text);
+          return;
+        }
+        const billsArray = data.bills;
+        if (!Array.isArray(billsArray)) {
+          console.error("Expected array but got:", billsArray);
+          return;
+        }
+
+        setTotalBillsCount(Array.isArray(data.bills) ? data.bills.length : 0);
+        setAllBills(billsArray);
+
+        const sorted = billsArray
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.expiryDate).getTime() -
+              new Date(a.expiryDate).getTime()
+          )
+          .slice(0, 10);
+
+        const mappedBills = sorted.map((bill: any) => ({
+          _id: bill._id,
+          name: bill.title,
+          amount: bill.amount,
+          category: bill.categoryName,
+          date: bill.expiryDate,
+          imageUri: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
+          description: bill.description || "",
+        }));
+        setRecentBills(mappedBills);
+      } catch (err) {
+        console.error("Error fetching recent bills:", err);
+      }
+    };
+    fetchBills();
+  }, [userId]);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const storedName = await AsyncStorage.getItem("userName");
+      if (storedName) setName(storedName);
+    };
+    loadUserData();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      if (userId) {
+        fetch(`${API_BASE_URL}/api/bills?userId=${userId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            const billsArray = data.bills || [];
+            const sorted = billsArray
+              .sort(
+                (a: any, b: any) =>
+                  new Date(b.expiryDate).getTime() -
+                  new Date(a.expiryDate).getTime()
+              )
+              .slice(0, 10);
+            const mappedBills = sorted.map((bill: any) => ({
+              _id: bill._id,
+              name: bill.title,
+              amount: bill.amount,
+              category: bill.categoryName || "—",
+              date: bill.expiryDate,
+              imageUri: bill.imageUrl
+                ? `${API_BASE_URL}/${bill.imageUrl}`
+                : null,
+              description: bill.description || "",
+            }));
+            setRecentBills(mappedBills);
+          })
+          .catch((err) =>
+            console.error("Error fetching recent bills on focus:", err)
+          );
+      }
+    });
+    return unsubscribe;
+  }, [navigation, userId]);
+
+  const totalSpentThisMonth = `₹ ${allBills.reduce(
+    (acc, b) => acc + Number(b.amount),
+    0
+  )}`;
+  const numBillsUploaded = `${totalBillsCount}`;
+
   const cardsData = [
     { id: "c1", title: "Total Spent", subtitle: totalSpentThisMonth },
     { id: "c2", title: "Bills Uploaded", subtitle: numBillsUploaded },
-    {
-      id: "c3",
-      title: "Expiring Soon",
-      subtitle: `${upcomingExpiringBills.length} bills`,
-    },
   ];
-
-  // Track current card
-  const [activeIndex, setActiveIndex] = useState(0);
 
   const onScrollEnd = (e: any) => {
     const contentOffsetX = e.nativeEvent.contentOffset.x;
@@ -106,24 +159,7 @@ export default function HomeScreen({
     setActiveIndex(index % cardsData.length);
   };
 
-  useEffect(() => {
-    const loadName = async () => {
-      try {
-        const name = await AsyncStorage.getItem("profileName");
-        if (name) setUserName(name);
-      } catch (e) {}
-    };
-    loadName();
-
-    const unsubscribe = navigation?.addListener?.("focus", loadName);
-    return unsubscribe;
-  }, [navigation]);
-
   const openCardDetail = (cardIndex: number) => {
-    if (cardIndex === 2) {
-      setExpiryListModalVisible(true);
-      return;
-    }
     let content;
     if (cardIndex === 0) {
       content = {
@@ -140,11 +176,7 @@ export default function HomeScreen({
           "Count of bills you've saved. Keep uploading to track expenses better.",
       };
     } else {
-      content = {
-        title: "Card",
-        subtitle: "--",
-        description: "Details",
-      };
+      content = { title: "Card", subtitle: "--", description: "Details" };
     }
     setCardDetailContent(content);
     setCardDetailModalVisible(true);
@@ -153,19 +185,6 @@ export default function HomeScreen({
   const openBillDetail = (bill: Bill) => {
     setSelectedBill(bill);
     setBillDetailModalVisible(true);
-  };
-
-  const onBillsHistory = () => {
-    navigation?.navigate?.("Bill");
-  };
-  const onManageNotifications = () => {
-    navigation?.navigate?.("Profile");
-  };
-  const onFilterByCategory = () => {
-    navigation?.navigate?.("Bill");
-  };
-  const onGenerateReport = () => {
-    navigation?.navigate?.("Report");
   };
 
   const getTodayString = () => {
@@ -178,23 +197,28 @@ export default function HomeScreen({
     return d.toLocaleDateString(undefined, opts);
   };
 
-  const filteredRecent = recentBills.filter((b) => {
-    if (!searchText) return true;
-    const s = searchText.toLowerCase();
-    return (
-      (b.name && b.name.toLowerCase().includes(s)) ||
-      (b.category && b.category.toLowerCase().includes(s)) ||
-      (b.amount && b.amount.toLowerCase().includes(s))
-    );
-  });
+  const filteredRecent = useMemo(() => {
+    if (!recentBills || recentBills.length === 0) return [];
+    const lowerSearch = search.toLowerCase();
+    return recentBills.filter((bill) => {
+      const name = bill.name?.toLowerCase() || "";
+      const category = bill.category?.toLowerCase() || "";
+      const amount = bill.amount?.toString() || "";
+      return (
+        name.includes(lowerSearch) ||
+        category.includes(lowerSearch) ||
+        amount.includes(lowerSearch)
+      );
+    });
+  }, [recentBills, search]);
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={{ flex: 1, padding: 5, backgroundColor: theme.background }}>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={{ flex: 1, padding: 5 }}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <FlatList
           data={filteredRecent}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.recentCard}
@@ -231,17 +255,15 @@ export default function HomeScreen({
                   Save My Bill
                 </Text>
               </View>
-
               <View style={styles.searchRow}>
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search bills, categories..."
-                  value={searchText}
-                  onChangeText={setSearchText}
+                  value={search}
+                  onChangeText={setSearch}
                   returnKeyType="search"
                 />
               </View>
-
               <View style={styles.dateRow}>
                 <View style={{ flex: 1 }} />
                 <Text
@@ -250,14 +272,11 @@ export default function HomeScreen({
                   {getTodayString()}
                 </Text>
               </View>
-
               <Text
                 style={[styles.welcomeText, { color: theme.text.highlight }]}
               >
-                Welcome {userName} !
+                Welcome {name}!
               </Text>
-
-              {/* Swipeable cards */}
               <View style={styles.cardsSection}>
                 <FlatList
                   data={cardsData}
@@ -277,7 +296,6 @@ export default function HomeScreen({
                     </TouchableOpacity>
                   )}
                 />
-
                 <View style={styles.dotsRow}>
                   {cardsData.map((_, i) => (
                     <View
@@ -290,239 +308,20 @@ export default function HomeScreen({
                   ))}
                 </View>
               </View>
-
-              {/* 4 circular icons */}
-              <View style={styles.iconGrid}>
-                <TouchableOpacity
-                  style={styles.iconCircle}
-                  onPress={onBillsHistory}
-                >
-                  <Text style={styles.iconEmoji}>🧾</Text>
-                  <Text
-                    style={[styles.iconLabel, { color: theme.text.secondary }]}
-                  >
-                    Bills History
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconCircle}
-                  onPress={onManageNotifications}
-                >
-                  <Text style={styles.iconEmoji}>🔔</Text>
-                  <Text
-                    style={[styles.iconLabel, { color: theme.text.secondary }]}
-                  >
-                    Notifications
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconCircle}
-                  onPress={onFilterByCategory}
-                >
-                  <Text style={styles.iconEmoji}>🔎</Text>
-                  <Text
-                    style={[styles.iconLabel, { color: theme.text.secondary }]}
-                  >
-                    Filter
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconCircle}
-                  onPress={onGenerateReport}
-                >
-                  <Text style={styles.iconEmoji}>📊</Text>
-                  <Text
-                    style={[styles.iconLabel, { color: theme.text.secondary }]}
-                  >
-                    Report
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.recentHeaderRow}>
-                <Text
-                  style={[styles.recentTitle, { color: theme.text.secondary }]}
-                >
-                  Recent
-                </Text>
-              </View>
             </>
           }
         />
-
-        {/* ---------- Modals ---------- */}
-        {/* Generic card detail modal */}
-        <Modal
-          visible={cardDetailModalVisible}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => setCardDetailModalVisible(false)}
-        >
-          <SafeAreaView style={styles.modalSafe}>
-            <View style={styles.cardModalContainer}>
-              <Text style={styles.cardModalTitle}>
-                {cardDetailContent?.title}
-              </Text>
-              <Text style={styles.cardModalSubtitle}>
-                {cardDetailContent?.subtitle}
-              </Text>
-              <Text style={styles.cardModalDescription}>
-                {cardDetailContent?.description}
-              </Text>
-
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setCardDetailModalVisible(false)}
-              >
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </Modal>
-
-        {/* Expiry list modal */}
-        <Modal
-          visible={expiryListModalVisible}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => setExpiryListModalVisible(false)}
-        >
-          <SafeAreaView style={styles.modalSafe}>
-            <View style={styles.expiryModalContainer}>
-              <Text style={styles.expiryModalTitle}>Bills Near Expiry</Text>
-              <Text style={styles.expiryModalSubtitle}>
-                {upcomingExpiringBills.length} bill(s) expiring soon
-              </Text>
-
-              <FlatList
-                data={upcomingExpiringBills}
-                keyExtractor={(it) => it.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.expiryListItem}
-                    onPress={() => {
-                      openBillDetail(item);
-                    }}
-                  >
-                    {item.imageUri ? (
-                      <Image
-                        source={{ uri: item.imageUri }}
-                        style={styles.expiryThumb}
-                      />
-                    ) : (
-                      <View style={[styles.expiryThumb, styles.noImage]}>
-                        <Text style={{ color: "#fff" }}>No Image</Text>
-                      </View>
-                    )}
-                    <View style={{ marginLeft: 12, flex: 1 }}>
-                      <Text style={{ fontWeight: "700" }}>
-                        {item.name || "Bill"}
-                      </Text>
-                      <Text>
-                        {item.date} • ₹ {item.amount}
-                      </Text>
-                      <Text style={{ color: "#666" }}>{item.category}</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-                contentContainerStyle={{ paddingVertical: 18 }}
-              />
-
-              <TouchableOpacity
-                style={[styles.modalCloseBtn, { marginTop: 12 }]}
-                onPress={() => setExpiryListModalVisible(false)}
-              >
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </Modal>
-
-        {/* Bill detail modal */}
-        <Modal
-          visible={billDetailModalVisible}
-          animationType="slide"
-          transparent={false}
-          onRequestClose={() => {
-            setBillDetailModalVisible(false);
-            setSelectedBill(null);
-          }}
-        >
-          <SafeAreaView style={styles.modalSafe}>
-            <ScrollView contentContainerStyle={styles.billModalContainer}>
-              <Text style={styles.billModalTitle}>
-                {selectedBill?.name || "Bill Detail"}
-              </Text>
-
-              {selectedBill?.imageUri ? (
-                <Image
-                  source={{ uri: selectedBill.imageUri }}
-                  style={styles.billImage}
-                />
-              ) : (
-                <View style={[styles.billImage, styles.noImage]}>
-                  <Text style={{ color: "#fff" }}>No Image</Text>
-                </View>
-              )}
-
-              <View style={styles.billInfoRow}>
-                <Text style={styles.billInfoLabel}>Amount</Text>
-                <Text style={styles.billInfoValue}>
-                  ₹ {selectedBill?.amount}
-                </Text>
-              </View>
-
-              <View style={styles.billInfoRow}>
-                <Text style={styles.billInfoLabel}>Date</Text>
-                <Text style={styles.billInfoValue}>{selectedBill?.date}</Text>
-              </View>
-
-              <View style={styles.billInfoRow}>
-                <Text style={styles.billInfoLabel}>Category</Text>
-                <Text style={styles.billInfoValue}>
-                  {selectedBill?.category}
-                </Text>
-              </View>
-
-              <View style={{ marginTop: 12 }}>
-                <Text style={{ fontWeight: "700" }}>Description</Text>
-                <Text style={{ color: "#444", marginTop: 6 }}>
-                  {selectedBill?.description || "—"}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.modalCloseBtn, { marginTop: 20 }]}
-                onPress={() => {
-                  setBillDetailModalVisible(false);
-                  setSelectedBill(null);
-                }}
-              >
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </SafeAreaView>
-        </Modal>
       </View>
       <BottomNavBar currentScreen="Home" navigation={navigation} />
     </SafeAreaProvider>
   );
 }
 
+// Keep your existing styles here (no change)
 const styles = StyleSheet.create({
-  titleRow: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "darkblue",
-  },
-  searchRow: {
-    marginBottom: 8,
-  },
+  titleRow: { alignItems: "center", marginBottom: 12 },
+  title: { fontSize: 28, fontWeight: "700", color: "darkblue" },
+  searchRow: { marginBottom: 8 },
   searchInput: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -537,19 +336,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: "center",
   },
-  dateText: {
-    fontSize: 13,
-    color: "#555",
-  },
-  welcomeText: {
-    fontSize: 40,
-    fontWeight: "800",
-    marginVertical: 12,
-  },
-  cardsSection: {
-    marginTop: 6,
-    marginBottom: 18,
-  },
+  dateText: { fontSize: 13, color: "#555" },
+  welcomeText: { fontSize: 40, fontWeight: "800", marginVertical: 12 },
+  cardsSection: { marginTop: 6, marginBottom: 18 },
   infoCard: {
     backgroundColor: "#eef2ff",
     padding: 16,
@@ -563,11 +352,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#0b4d91",
   },
-  dotsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 10,
-  },
+  dotsRow: { flexDirection: "row", justifyContent: "center", marginTop: 10 },
   dot: {
     width: 8,
     height: 8,
@@ -575,33 +360,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     backgroundColor: "#0b4d91",
   },
-  iconGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 6,
-    marginBottom: 18,
-  },
-  iconCircle: {
-    width: (width - 72) / 4,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconEmoji: {
-    fontSize: 28,
-    backgroundColor: "#f1f5ff",
-    padding: 14,
-    borderRadius: 40,
-  },
-  iconLabel: {
-    marginTop: 6,
-    fontSize: 12,
-    textAlign: "center",
-  },
-  recentHeaderRow: {
-    marginTop: 6,
-    marginBottom: 6,
-  },
-  recentTitle: { fontSize: 18, fontWeight: "800" },
   recentCard: {
     flexDirection: "row",
     backgroundColor: "#fff",
@@ -622,100 +380,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#888",
   },
-  recentDetails: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  recentAmount: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#111",
-  },
-  recentMeta: {
-    fontSize: 13,
-    color: "#666",
-    marginTop: 2,
-  },
-  recentName: {
-    fontSize: 15,
-    fontWeight: "500",
-    marginTop: 3,
-  },
-  modalSafe: { flex: 1, backgroundColor: "#fff" },
-  cardModalContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  cardModalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  cardModalSubtitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#0b4d91",
-    marginBottom: 10,
-  },
-  cardModalDescription: {
-    fontSize: 15,
-    color: "#333",
-  },
-  modalCloseBtn: {
-    marginTop: 20,
-    backgroundColor: "#0b4d91",
-    borderRadius: 8,
-    padding: 14,
-    alignItems: "center",
-  },
-  modalCloseText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  expiryModalContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  expiryModalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-  },
-  expiryModalSubtitle: {
-    fontSize: 16,
-    marginTop: 6,
-    color: "#333",
-  },
-  expiryListItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  expiryThumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 8,
-    backgroundColor: "#ddd",
-  },
-  billModalContainer: {
-    padding: 20,
-  },
-  billModalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
-  billImage: {
-    width: "100%",
-    height: 220,
-    resizeMode: "cover",
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  billInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 6,
-  },
-  billInfoLabel: { fontWeight: "700" },
-  billInfoValue: { fontSize: 16 },
+  recentDetails: { marginLeft: 12, flex: 1 },
+  recentAmount: { fontSize: 17, fontWeight: "800", color: "#111" },
+  recentMeta: { fontSize: 13, color: "#666", marginTop: 2 },
+  recentName: { fontSize: 15, fontWeight: "500", marginTop: 3 },
 });
