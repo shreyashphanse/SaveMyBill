@@ -246,135 +246,138 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
   };
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-        <Text style={[styles.title, { color: theme.text.primary }]}>
-          Upload Screen
-        </Text>
-
-        <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
-          <Text style={styles.fileText}>
-            {file ? file.name : "Choose Bill Photo"}
+    <View style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
+        <View
+          style={{ flex: 1, padding: 20, backgroundColor: theme.background }}
+        >
+          <Text style={[styles.title, { color: theme.text.primary }]}>
+            Upload Screen
           </Text>
-        </TouchableOpacity>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Bill Title"
-          value={title}
-          onChangeText={setTitle}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Bill Amount"
-          keyboardType="numeric"
-          value={amount}
-          onChangeText={setAmount}
-        />
-
-        <DropDownPicker
-          open={open}
-          value={selectedCategory}
-          items={items}
-          setOpen={setOpen}
-          setValue={setSelectedCategory}
-          setItems={setItems}
-          placeholder={
-            items.length ? "Select Category" : "No categories available"
-          }
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
-        />
-
-        <Text style={{ padding: 5, fontSize: 20 }}>Expiry Date:</Text>
-        <TextInput
-          style={[styles.input, { backgroundColor: "#f0f0f0" }]}
-          value={day && month && year ? `${day}/${month}/${year}` : ""}
-          editable={false}
-          placeholder="Detected Expiry Date"
-        />
-
-        <View style={styles.dateRow}>
-          <TextInput
-            style={[styles.input, styles.dateInput]}
-            placeholder="DD"
-            keyboardType="numeric"
-            maxLength={2}
-            value={day}
-            onChangeText={setDay} // user types freely
-            onEndEditing={() => {
-              const validated = validateDateSoft(day, month, year);
-              setDay(validated.day);
-              setMonth(validated.month);
-              setYear(validated.year);
-            }}
-          />
+          <TouchableOpacity style={styles.filePicker} onPress={pickFile}>
+            <Text style={styles.fileText}>
+              {file ? file.name : "Choose Bill Photo"}
+            </Text>
+          </TouchableOpacity>
 
           <TextInput
-            style={[styles.input, styles.dateInput]}
-            placeholder="MM"
-            keyboardType="numeric"
-            maxLength={2}
-            value={month}
-            onChangeText={setMonth}
-            onEndEditing={() => {
-              const validated = validateDateSoft(day, month, year);
-              setDay(validated.day);
-              setMonth(validated.month);
-              setYear(validated.year);
-            }}
+            style={styles.input}
+            placeholder="Enter Bill Title"
+            value={title}
+            onChangeText={setTitle}
           />
-
           <TextInput
-            style={[styles.input, styles.dateInput, { flex: 2 }]}
-            placeholder="YYYY"
+            style={styles.input}
+            placeholder="Enter Bill Amount"
             keyboardType="numeric"
-            maxLength={4}
-            value={year}
-            onChangeText={setYear}
-            onEndEditing={() => {
-              const validated = validateDateSoft(day, month, year);
-              setDay(validated.day);
-              setMonth(validated.month);
-              setYear(validated.year);
-            }}
+            value={amount}
+            onChangeText={setAmount}
           />
-        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Description (optional)"
-          value={description}
-          onChangeText={setDescription}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Store Name"
-          value={storeName}
-          onChangeText={setStoreName}
-        />
+          <DropDownPicker
+            open={open}
+            value={selectedCategory}
+            items={items}
+            setOpen={setOpen}
+            setValue={setSelectedCategory}
+            setItems={setItems}
+            placeholder={
+              items.length ? "Select Category" : "No categories available"
+            }
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropdownContainer}
+          />
 
-        <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-          <Text style={styles.uploadText}>Upload</Text>
-        </TouchableOpacity>
-      </View>
+          <Text style={{ padding: 5, fontSize: 20 }}>Expiry Date:</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+            value={day && month && year ? `${day}/${month}/${year}` : ""}
+            editable={false}
+            placeholder="Detected Expiry Date"
+          />
 
-      <Modal
-        visible={successModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setSuccessModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.checkmark}>✅</Text>
-            <Text style={styles.modalText}>Uploaded successfully</Text>
+          <View style={styles.dateRow}>
+            <TextInput
+              style={[styles.input, styles.dateInput]}
+              placeholder="DD"
+              keyboardType="numeric"
+              maxLength={2}
+              value={day}
+              onChangeText={setDay} // user types freely
+              onEndEditing={() => {
+                const validated = validateDateSoft(day, month, year);
+                setDay(validated.day);
+                setMonth(validated.month);
+                setYear(validated.year);
+              }}
+            />
+
+            <TextInput
+              style={[styles.input, styles.dateInput]}
+              placeholder="MM"
+              keyboardType="numeric"
+              maxLength={2}
+              value={month}
+              onChangeText={setMonth}
+              onEndEditing={() => {
+                const validated = validateDateSoft(day, month, year);
+                setDay(validated.day);
+                setMonth(validated.month);
+                setYear(validated.year);
+              }}
+            />
+
+            <TextInput
+              style={[styles.input, styles.dateInput, { flex: 2 }]}
+              placeholder="YYYY"
+              keyboardType="numeric"
+              maxLength={4}
+              value={year}
+              onChangeText={setYear}
+              onEndEditing={() => {
+                const validated = validateDateSoft(day, month, year);
+                setDay(validated.day);
+                setMonth(validated.month);
+                setYear(validated.year);
+              }}
+            />
           </View>
-        </View>
-      </Modal>
 
+          <TextInput
+            style={styles.input}
+            placeholder="Description (optional)"
+            value={description}
+            onChangeText={setDescription}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Store Name"
+            value={storeName}
+            onChangeText={setStoreName}
+          />
+
+          <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
+            <Text style={styles.uploadText}>Upload</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Modal
+          visible={successModal}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setSuccessModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.checkmark}>✅</Text>
+              <Text style={styles.modalText}>Uploaded successfully</Text>
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaProvider>
       <BottomNavBar currentScreen="Upload" navigation={navigation} />
-    </SafeAreaProvider>
+    </View>
   );
 }
 

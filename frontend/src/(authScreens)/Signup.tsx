@@ -27,26 +27,61 @@ export default function Signup({ navigation }: any) {
         padding: 20,
       }}
     >
-      <Text style={{ marginBottom: 10, fontSize: 18 }}>Sign Up</Text>
+      <Text style={{ fontSize: 45, fontWeight: "bold", color: "#003366" }}>
+        Sign-Up
+      </Text>
       <TextInput
         placeholder="Enter your email"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
-        style={{ borderWidth: 1, padding: 10, marginBottom: 10, width: "100%" }}
+        style={{
+          borderWidth: 2,
+          borderRadius: 10,
+          padding: 10,
+          marginBottom: 10,
+          width: "100%",
+        }}
       />
       <TextInput
         placeholder="Enter your password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        style={{ borderWidth: 1, padding: 10, marginBottom: 20, width: "100%" }}
+        style={{
+          borderWidth: 2,
+          borderRadius: 10,
+          padding: 10,
+          marginBottom: 20,
+          width: "100%",
+        }}
       />
-      <Button title="Sign Up" onPress={handleSignup} />
-      <Text style={{ marginTop: 10 }}>{message}</Text>
+      <TouchableOpacity
+        style={{
+          width: "50%",
+          height: 50, // better to use fixed height instead of %
+          backgroundColor: "#003366",
+          borderRadius: 13,
+          justifyContent: "center", // centers vertically
+          alignItems: "center", // centers horizontally
+        }}
+        onPress={handleSignup}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 20,
+            fontWeight: "bold",
+          }}
+        >
+          Sign Up
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={{ marginTop: 10, color: "red" }}>{message}</Text>
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={{ marginTop: 20, color: "blue" }}>
+        <Text style={{ marginTop: 20, color: "#003366" }}>
           Already have an account? Login
         </Text>
       </TouchableOpacity>

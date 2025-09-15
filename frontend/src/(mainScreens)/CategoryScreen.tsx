@@ -211,114 +211,123 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
   }, [isSelectionMode]);
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-        <Text style={[styles.title, { color: theme.text?.primary ?? "#000" }]}>
-          Category Screen
-        </Text>
+    <View style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
+        <View
+          style={{ flex: 1, padding: 20, backgroundColor: theme.background }}
+        >
+          <Text
+            style={[styles.title, { color: theme.text?.primary ?? "#000" }]}
+          >
+            Category Screen
+          </Text>
 
-        {/* Sort dropdown */}
-        <View style={{ zIndex: 1000, marginBottom: 15 }}>
-          <DropDownPicker
-            open={sortOpen}
-            value={sortValue}
-            items={sortItems}
-            setOpen={setSortOpen}
-            setValue={setSortValue}
-            setItems={setSortItems}
-            placeholder="Sort categories"
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-        </View>
+          {/* Sort dropdown */}
+          <View style={{ zIndex: 1000, marginBottom: 15 }}>
+            <DropDownPicker
+              open={sortOpen}
+              value={sortValue}
+              items={sortItems}
+              setOpen={setSortOpen}
+              setValue={setSortValue}
+              setItems={setSortItems}
+              placeholder="Sort categories"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+            />
+          </View>
 
-        {/* List */}
-        <FlatList
-          data={sortedCategories}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onLongPress={() => handleLongPress(item._id)}
-              delayLongPress={800}
-              onPress={() => {
-                if (isSelectionMode) toggleSelection(item._id);
-              }}
-            >
-              <View
-                style={[
-                  styles.card,
-                  selectedCategories.includes(item._id) && styles.selectedCard,
-                ]}
+          {/* List */}
+          <FlatList
+            data={sortedCategories}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onLongPress={() => handleLongPress(item._id)}
+                delayLongPress={800}
+                onPress={() => {
+                  if (isSelectionMode) toggleSelection(item._id);
+                }}
               >
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardDetails}>₹{item.amount}</Text>
-                <Text style={styles.cardDetails}>{item.bills} Bills</Text>
-              </View>
+                <View
+                  style={[
+                    styles.card,
+                    selectedCategories.includes(item._id) &&
+                      styles.selectedCard,
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <Text style={styles.cardDetails}>₹{item.amount}</Text>
+                  <Text style={styles.cardDetails}>{item.bills} Bills</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ paddingBottom: 120 }}
+          />
+
+          {/* Add button */}
+          {!isSelectionMode && (
+            <TouchableOpacity
+              style={styles.fab}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
+                +
+              </Text>
             </TouchableOpacity>
           )}
-          contentContainerStyle={{ paddingBottom: 120 }}
-        />
 
-        {/* Add button */}
-        {!isSelectionMode && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
-              +
-            </Text>
-          </TouchableOpacity>
-        )}
+          {/* Delete button */}
+          {isSelectionMode && (
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteButtonText}>
+                Delete Selected ({selectedCategories.length})
+              </Text>
+            </TouchableOpacity>
+          )}
 
-        {/* Delete button */}
-        {isSelectionMode && (
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>
-              Delete Selected ({selectedCategories.length})
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Add modal */}
-        <Modal visible={modalVisible} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add Category</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Category Name"
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-              />
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleAddCategory}
-              >
-                <Text style={styles.modalButtonText}>Add</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#aaa" }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
+          {/* Add modal */}
+          <Modal visible={modalVisible} transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Add Category</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Category Name"
+                  value={newCategoryName}
+                  onChangeText={setNewCategoryName}
+                />
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={handleAddCategory}
+                >
+                  <Text style={styles.modalButtonText}>Add</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "#aaa" }]}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
 
-        {/* Success modal */}
-        <Modal visible={successModal} animationType="fade" transparent={true}>
-          <View style={styles.successOverlay}>
-            <View style={styles.successContent}>
-              <Text style={styles.successText}>✅ Category deleted</Text>
+          {/* Success modal */}
+          <Modal visible={successModal} animationType="fade" transparent={true}>
+            <View style={styles.successOverlay}>
+              <View style={styles.successContent}>
+                <Text style={styles.successText}>✅ Category deleted</Text>
+              </View>
             </View>
-          </View>
-        </Modal>
-      </View>
-
+          </Modal>
+        </View>
+      </SafeAreaProvider>
       <BottomNavBar currentScreen="Category" navigation={navigation} />
-    </SafeAreaProvider>
+    </View>
   );
 }
 const styles = StyleSheet.create({

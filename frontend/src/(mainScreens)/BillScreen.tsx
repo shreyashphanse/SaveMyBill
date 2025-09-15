@@ -185,135 +185,144 @@ export default function BillScreen({ navigation }: { navigation: any }) {
   }, [isSelectionMode]);
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
-      <View style={{ flex: 1, padding: 20, backgroundColor: theme.background }}>
-        <Text style={[styles.title, { color: theme.text.primary }]}>
-          {" "}
-          My Bills{" "}
-        </Text>
-
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Search bills..."
-          value={search}
-          onChangeText={setSearch}
-        />
-
-        {/* Filter */}
-        <View style={{ zIndex: 2000, marginBottom: 15 }}>
-          <DropDownPicker
-            open={filterOpen}
-            value={filterValue}
-            items={filterItems}
-            setOpen={setFilterOpen}
-            setValue={setFilterValue}
-            setItems={setFilterItems}
-            placeholder="Filter by category"
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-        </View>
-
-        {/* Sort */}
-        <View style={{ zIndex: 1000, marginBottom: 15 }}>
-          <DropDownPicker
-            open={sortOpen}
-            value={sortValue}
-            items={sortItems}
-            setOpen={setSortOpen}
-            setValue={setSortValue}
-            setItems={setSortItems}
-            placeholder="Sort bills"
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropdownContainer}
-          />
-        </View>
-
-        {/* Bills list */}
-        <FlatList
-          data={filteredBills}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onLongPress={() => handleLongPress(item.id)}
-              delayLongPress={1000}
-              onPress={() => {
-                if (isSelectionMode) toggleSelection(item.id);
-                else setSelectedBill(item);
-              }}
-            >
-              <View
-                style={[
-                  styles.card,
-                  selectedBills.includes(item.id) && {
-                    backgroundColor: "#D8BFD8",
-                  },
-                ]}
-              >
-                <Image source={{ uri: item.image }} style={styles.cardImage} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardDetails}>{item.details}</Text>
-                  <Text style={styles.cardDate}>Expiry: {item.date}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        />
-
-        {/* Add Button */}
-        <TouchableOpacity style={styles.fab} onPress={handleaddbill}>
-          <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
+    <View style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#fff" }}>
+        <View
+          style={{ flex: 1, padding: 20, backgroundColor: theme.background }}
+        >
+          <Text style={[styles.title, { color: theme.text.primary }]}>
             {" "}
-            +{" "}
+            My Bills{" "}
           </Text>
-        </TouchableOpacity>
 
-        {/* Delete Button */}
-        {isSelectionMode && (
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search bills..."
+            value={search}
+            onChangeText={setSearch}
+          />
+
+          {/* Filter */}
+          <View style={{ zIndex: 2000, marginBottom: 15 }}>
+            <DropDownPicker
+              open={filterOpen}
+              value={filterValue}
+              items={filterItems}
+              setOpen={setFilterOpen}
+              setValue={setFilterValue}
+              setItems={setFilterItems}
+              placeholder="Filter by category"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+            />
+          </View>
+
+          {/* Sort */}
+          <View style={{ zIndex: 1000, marginBottom: 15 }}>
+            <DropDownPicker
+              open={sortOpen}
+              value={sortValue}
+              items={sortItems}
+              setOpen={setSortOpen}
+              setValue={setSortValue}
+              setItems={setSortItems}
+              placeholder="Sort bills"
+              style={styles.dropdown}
+              dropDownContainerStyle={styles.dropdownContainer}
+            />
+          </View>
+
+          {/* Bills list */}
+          <FlatList
+            data={filteredBills}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onLongPress={() => handleLongPress(item.id)}
+                delayLongPress={1000}
+                onPress={() => {
+                  if (isSelectionMode) toggleSelection(item.id);
+                  else setSelectedBill(item);
+                }}
+              >
+                <View
+                  style={[
+                    styles.card,
+                    selectedBills.includes(item.id) && {
+                      backgroundColor: "#D8BFD8",
+                    },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.cardImage}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={styles.cardDetails}>{item.details}</Text>
+                    <Text style={styles.cardDate}>Expiry: {item.date}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ paddingBottom: 100 }}
+          />
+
+          {/* Add Button */}
+          <TouchableOpacity style={styles.fab} onPress={handleaddbill}>
+            <Text style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>
               {" "}
-              Delete Selected ({selectedBills.length}){" "}
+              +{" "}
             </Text>
           </TouchableOpacity>
-        )}
 
-        {/* Modal */}
-        <Modal visible={!!selectedBill} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              {selectedBill && (
-                <>
-                  <Image
-                    source={{ uri: selectedBill.image }}
-                    style={styles.modalImage}
-                  />
-                  <Text style={styles.modalTitle}>{selectedBill.title}</Text>
-                  <Text style={styles.modalDetails}>
-                    {" "}
-                    {selectedBill.details}{" "}
-                  </Text>
-                  <Text style={styles.modalDetails}>
-                    {" "}
-                    Expiry Date: {selectedBill.date}{" "}
-                  </Text>
-                </>
-              )}
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setSelectedBill(null)}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
+          {/* Delete Button */}
+          {isSelectionMode && (
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteButtonText}>
+                {" "}
+                Delete Selected ({selectedBills.length}){" "}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Modal */}
+          <Modal visible={!!selectedBill} transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                {selectedBill && (
+                  <>
+                    <Image
+                      source={{ uri: selectedBill.image }}
+                      style={styles.modalImage}
+                    />
+                    <Text style={styles.modalTitle}>{selectedBill.title}</Text>
+                    <Text style={styles.modalDetails}>
+                      {" "}
+                      {selectedBill.details}{" "}
+                    </Text>
+                    <Text style={styles.modalDetails}>
+                      {" "}
+                      Expiry Date: {selectedBill.date}{" "}
+                    </Text>
+                  </>
+                )}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setSelectedBill(null)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
-      </View>
-
+          </Modal>
+        </View>
+      </SafeAreaProvider>
       <BottomNavBar currentScreen="Bill" navigation={navigation} />
-    </SafeAreaProvider>
+    </View>
   );
 }
 

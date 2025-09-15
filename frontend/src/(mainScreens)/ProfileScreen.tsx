@@ -158,404 +158,416 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
   }, []);
 
   return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: theme.background }}>
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.text.primary }]}>
-          Profile Screen
-        </Text>
-        <ScrollView style={styles.sub1}>
-          {/* Profile image + name/email */}
-          <View style={styles.imgNameEmail}>
-            <TouchableOpacity onPress={() => setShowImageModal(true)}>
-              <Image
-                source={
-                  profileImage
-                    ? { uri: profileImage }
-                    : {
-                        uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-                      }
-                }
-                style={styles.img}
-              />
-            </TouchableOpacity>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ flexGrow: 1 }}
-            >
-              <View style={styles.nameEmail}>
-                <Text style={[styles.text1, { color: theme.text.highlight }]}>
-                  {name}
-                </Text>
-                <Text style={[styles.text1, { color: theme.text.highlight }]}>
-                  {email}
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
-          {/* Edit Profile Modal */}
-          <Modal
-            visible={showEditProfileModal}
-            transparent
-            animationType="slide"
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.5)",
-              }}
-            >
-              <View style={styles.popup}>
-                <Text style={styles.popupTitle}>Edit Profile</Text>
-                <TextInput
-                  placeholder="Enter Profile Name"
-                  value={newName}
-                  onChangeText={setNewName}
-                  style={styles.input}
-                />
-                <View style={{ flexDirection: "row", gap: 20 }}>
-                  {/* Cancel Button */}
-                  <Pressable
-                    style={[styles.modalBtn, { backgroundColor: "#c70000" }]}
-                    onPress={() => {
-                      setNewName(""); // clear input
-                      setShowEditProfileModal(false);
-                    }}
-                  >
-                    <Text style={{ color: "#fff" }}>Cancel</Text>
-                  </Pressable>
-
-                  {/* OK Button */}
-                  <Pressable
-                    style={[styles.modalBtn, { backgroundColor: "#003366" }]}
-                    onPress={async () => {
-                      if (!newName.trim()) {
-                        Alert.alert("Error", "Please enter a valid name.");
-                        return;
-                      }
-                      try {
-                        if (auth.currentUser) {
-                          await updateProfile(auth.currentUser, {
-                            displayName: newName,
-                          });
-                          setName(newName);
-                          await AsyncStorage.setItem("userName", newName);
+    <View style={{ flex: 1 }}>
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: theme.background }}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+          <Text style={[styles.title, { color: theme.text.primary }]}>
+            Profile Screen
+          </Text>
+          <ScrollView style={styles.sub1}>
+            {/* Profile image + name/email */}
+            <View style={styles.imgNameEmail}>
+              <TouchableOpacity onPress={() => setShowImageModal(true)}>
+                <Image
+                  source={
+                    profileImage
+                      ? { uri: profileImage }
+                      : {
+                          uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
                         }
-                        setNewName(""); // clear input
-                        setShowEditProfileModal(false);
-                      } catch (error: any) {
-                        Alert.alert(
-                          "Error",
-                          error.message || "Failed to update name."
-                        );
-                      }
-                    }}
-                  >
-                    <Text style={{ color: "#fff" }}>OK</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Change Password Modal */}
-          <Modal
-            visible={showChangePasswordModal}
-            transparent
-            animationType="slide"
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.5)",
-              }}
-            >
-              <View style={styles.popup}>
-                <Text style={styles.popupTitle}>Change Password</Text>
-                <TextInput
-                  placeholder="Old Password"
-                  value={currentPasswordInput}
-                  onChangeText={setCurrentPasswordInput}
-                  secureTextEntry
-                  style={styles.input}
+                  }
+                  style={styles.img}
                 />
-                <TextInput
-                  placeholder="New Password"
-                  value={newPasswordInput}
-                  onChangeText={setNewPasswordInput}
-                  secureTextEntry
-                  style={styles.input}
-                />
-                <View style={{ flexDirection: "row", gap: 20 }}>
-                  {/* Cancel Button */}
-                  <Pressable
-                    style={[styles.modalBtn, { backgroundColor: "#c70000" }]}
-                    onPress={() => {
-                      setCurrentPasswordInput(""); // clear inputs
-                      setNewPasswordInput("");
-                      setShowChangePasswordModal(false);
-                    }}
-                  >
-                    <Text style={{ color: "#fff" }}>Cancel</Text>
-                  </Pressable>
-
-                  {/* OK Button */}
-                  <Pressable
-                    style={[styles.modalBtn, { backgroundColor: "#003366" }]}
-                    onPress={async () => {
-                      await updatePassword(); // run your password update fn
-                      setCurrentPasswordInput(""); // clear inputs
-                      setNewPasswordInput("");
-                      setShowChangePasswordModal(false);
-                    }}
-                  >
-                    <Text style={{ color: "#fff" }}>OK</Text>
-                  </Pressable>
+              </TouchableOpacity>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ flexGrow: 1 }}
+              >
+                <View style={styles.nameEmail}>
+                  <Text style={[styles.text1, { color: theme.text.highlight }]}>
+                    {name}
+                  </Text>
+                  <Text style={[styles.text1, { color: theme.text.highlight }]}>
+                    {email}
+                  </Text>
                 </View>
-              </View>
+              </ScrollView>
             </View>
-          </Modal>
-
-          {/* Image modal */}
-          <Modal visible={showImageModal} transparent animationType="fade">
-            <View style={styles.modalContainer}>
-              <Image
-                source={
-                  profileImage
-                    ? { uri: profileImage }
-                    : {
-                        uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-                      }
-                }
-                style={styles.fullscreenImg}
-              />
-              <View style={styles.modalButtonsRow}>
-                <Pressable style={styles.modalBtn} onPress={removeProfilePhoto}>
-                  <Text style={styles.modalBtnText}>Remove Photo</Text>
-                </Pressable>
-                <Pressable style={styles.modalBtn} onPress={pickImage}>
-                  <Text style={styles.modalBtnText}>Change Photo</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.modalBtn, { backgroundColor: "grey" }]}
-                  onPress={() => setShowImageModal(false)}
-                >
-                  <Text style={styles.modalBtnText}>Close</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-          {/* Terms & Conditions Modal */}
-          <Modal visible={showTermsModal} transparent animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.popup}>
-                <Text
-                  style={[styles.popupTitle, { color: theme.text.primary }]}
-                >
-                  Terms & Conditions
-                </Text>
-                <ScrollView>
-                  <Text style={{ color: theme.text.secondary }}>
-                    By using SaveMyBill, you agree to store receipts, bills, and
-                    product details responsibly. We are not responsible for lost
-                    data, expired reminders, or incorrect OCR readings. Do not
-                    misuse the app for fraudulent warranty claims. SaveMyBill is
-                    designed only for personal record-keeping and reminder
-                    purposes.
-                  </Text>
-                </ScrollView>
-                <Pressable
-                  style={[styles.modalBtn, { backgroundColor: theme.primary }]}
-                  onPress={() => setShowTermsModal(false)}
-                >
-                  <Text style={{ color: theme.text.secondary }}>Close</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Privacy Policy Modal */}
-          <Modal visible={showPrivacyModal} transparent animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.popup}>
-                <Text
-                  style={[styles.popupTitle, { color: theme.text.primary }]}
-                >
-                  Privacy Policy
-                </Text>
-                <ScrollView>
-                  <Text style={{ color: theme.text.secondary }}>
-                    SaveMyBill stores only the data you provide: receipts,
-                    product details, and reminders. No personal data is shared
-                    with third parties. Images are kept locally unless you
-                    explicitly sync them to cloud storage. We respect your
-                    privacy and only use data to improve your experience.
-                  </Text>
-                </ScrollView>
-                <Pressable
-                  style={[styles.modalBtn, { backgroundColor: theme.primary }]}
-                  onPress={() => setShowPrivacyModal(false)}
-                >
-                  <Text style={{ color: theme.text.secondary }}>Close</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Help Modal */}
-          <Modal visible={showHelpModal} transparent animationType="slide">
-            <View style={styles.modalContainer}>
-              <View style={styles.popup}>
-                <Text
-                  style={[styles.popupTitle, { color: theme.text.primary }]}
-                >
-                  Help & Support
-                </Text>
-                <Text style={{ color: theme.text.secondary }}>
-                  For support, please contact us at:
-                </Text>
-                <Text style={{ color: theme.text.primary, fontWeight: "600" }}>
-                  pokemongosathiemail22@gmail.com
-                </Text>
-                <Pressable
-                  style={[
-                    styles.modalBtn,
-                    { backgroundColor: theme.primary, marginTop: 20 },
-                  ]}
-                  onPress={() => setShowHelpModal(false)}
-                >
-                  <Text style={{ color: theme.text.secondary }}>Close</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Dark mode */}
-          <View style={styles.darkMode}>
-            <Text style={{ fontSize: 20, color: theme.text.secondary }}>
-              Dark Mode
-            </Text>
-            <Switch
-              value={isDarkMode}
-              onValueChange={handleDarkModeTogglePersist}
-            />
-          </View>
-
-          {/* Notifications */}
-          <View style={styles.darkMode}>
-            <Text style={{ fontSize: 20, color: theme.text.secondary }}>
-              Notifications
-            </Text>
-            <Switch
-              value={isNotificationOn}
-              onValueChange={handleToggleNotificationPersist}
-            />
-          </View>
-
-          {/* Notification modal */}
-          <Modal
-            visible={notifModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setNotifModal(false)}
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0,0,0,0.3)",
-              }}
+            {/* Edit Profile Modal */}
+            <Modal
+              visible={showEditProfileModal}
+              transparent
+              animationType="slide"
             >
               <View
                 style={{
-                  backgroundColor: "white",
-                  padding: 20,
-                  borderRadius: 12,
-                  minWidth: "70%",
+                  flex: 1,
+                  justifyContent: "center",
                   alignItems: "center",
+                  backgroundColor: "rgba(0,0,0,0.5)",
                 }}
               >
-                <Text
-                  style={{ fontSize: 16, fontWeight: "bold", color: "green" }}
-                >
-                  ✅ Notifications turned on
-                </Text>
+                <View style={styles.popup}>
+                  <Text style={styles.popupTitle}>Edit Profile</Text>
+                  <TextInput
+                    placeholder="Enter Profile Name"
+                    value={newName}
+                    onChangeText={setNewName}
+                    style={styles.input}
+                  />
+                  <View style={{ flexDirection: "row", gap: 20 }}>
+                    {/* Cancel Button */}
+                    <Pressable
+                      style={[styles.modalBtn, { backgroundColor: "#c70000" }]}
+                      onPress={() => {
+                        setNewName(""); // clear input
+                        setShowEditProfileModal(false);
+                      }}
+                    >
+                      <Text style={{ color: "#fff" }}>Cancel</Text>
+                    </Pressable>
+
+                    {/* OK Button */}
+                    <Pressable
+                      style={[styles.modalBtn, { backgroundColor: "#003366" }]}
+                      onPress={async () => {
+                        if (!newName.trim()) {
+                          Alert.alert("Error", "Please enter a valid name.");
+                          return;
+                        }
+                        try {
+                          if (auth.currentUser) {
+                            await updateProfile(auth.currentUser, {
+                              displayName: newName,
+                            });
+                            setName(newName);
+                            await AsyncStorage.setItem("userName", newName);
+                          }
+                          setNewName(""); // clear input
+                          setShowEditProfileModal(false);
+                        } catch (error: any) {
+                          Alert.alert(
+                            "Error",
+                            error.message || "Failed to update name."
+                          );
+                        }
+                      }}
+                    >
+                      <Text style={{ color: "#fff" }}>OK</Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-            </View>
-          </Modal>
+            </Modal>
 
-          {/* Account Settings */}
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => setShowAccountSettings(!showAccountSettings)}
-          >
-            <Text style={[styles.menuText, { color: theme.text.secondary }]}>
-              Account Settings
-            </Text>
-          </TouchableOpacity>
-          {showAccountSettings && (
-            <View style={styles.subMenu}>
-              <TouchableOpacity onPress={() => setShowEditProfileModal(true)}>
-                <Text style={[styles.subItem, { color: theme.text.body }]}>
-                  Edit Profile
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowChangePasswordModal(true)}
+            {/* Change Password Modal */}
+            <Modal
+              visible={showChangePasswordModal}
+              transparent
+              animationType="slide"
+            >
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                }}
               >
-                <Text style={[styles.subItem, { color: theme.text.body }]}>
-                  Change Password
-                </Text>
-              </TouchableOpacity>
+                <View style={styles.popup}>
+                  <Text style={styles.popupTitle}>Change Password</Text>
+                  <TextInput
+                    placeholder="Old Password"
+                    value={currentPasswordInput}
+                    onChangeText={setCurrentPasswordInput}
+                    secureTextEntry
+                    style={styles.input}
+                  />
+                  <TextInput
+                    placeholder="New Password"
+                    value={newPasswordInput}
+                    onChangeText={setNewPasswordInput}
+                    secureTextEntry
+                    style={styles.input}
+                  />
+                  <View style={{ flexDirection: "row", gap: 20 }}>
+                    {/* Cancel Button */}
+                    <Pressable
+                      style={[styles.modalBtn, { backgroundColor: "#c70000" }]}
+                      onPress={() => {
+                        setCurrentPasswordInput(""); // clear inputs
+                        setNewPasswordInput("");
+                        setShowChangePasswordModal(false);
+                      }}
+                    >
+                      <Text style={{ color: "#fff" }}>Cancel</Text>
+                    </Pressable>
+
+                    {/* OK Button */}
+                    <Pressable
+                      style={[styles.modalBtn, { backgroundColor: "#003366" }]}
+                      onPress={async () => {
+                        await updatePassword(); // run your password update fn
+                        setCurrentPasswordInput(""); // clear inputs
+                        setNewPasswordInput("");
+                        setShowChangePasswordModal(false);
+                      }}
+                    >
+                      <Text style={{ color: "#fff" }}>OK</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Image modal */}
+            <Modal visible={showImageModal} transparent animationType="fade">
+              <View style={styles.modalContainer}>
+                <Image
+                  source={
+                    profileImage
+                      ? { uri: profileImage }
+                      : {
+                          uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+                        }
+                  }
+                  style={styles.fullscreenImg}
+                />
+                <View style={styles.modalButtonsRow}>
+                  <Pressable
+                    style={styles.modalBtn}
+                    onPress={removeProfilePhoto}
+                  >
+                    <Text style={styles.modalBtnText}>Remove Photo</Text>
+                  </Pressable>
+                  <Pressable style={styles.modalBtn} onPress={pickImage}>
+                    <Text style={styles.modalBtnText}>Change Photo</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.modalBtn, { backgroundColor: "grey" }]}
+                    onPress={() => setShowImageModal(false)}
+                  >
+                    <Text style={styles.modalBtnText}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+            {/* Terms & Conditions Modal */}
+            <Modal visible={showTermsModal} transparent animationType="slide">
+              <View style={styles.modalContainer}>
+                <View style={styles.popup}>
+                  <Text
+                    style={[styles.popupTitle, { color: theme.text.primary }]}
+                  >
+                    Terms & Conditions
+                  </Text>
+                  <ScrollView>
+                    <Text style={{ color: theme.text.secondary }}>
+                      By using SaveMyBill, you agree to store receipts, bills,
+                      and product details responsibly. We are not responsible
+                      for lost data, expired reminders, or incorrect OCR
+                      readings. Do not misuse the app for fraudulent warranty
+                      claims. SaveMyBill is designed only for personal
+                      record-keeping and reminder purposes.
+                    </Text>
+                  </ScrollView>
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: theme.primary },
+                    ]}
+                    onPress={() => setShowTermsModal(false)}
+                  >
+                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Privacy Policy Modal */}
+            <Modal visible={showPrivacyModal} transparent animationType="slide">
+              <View style={styles.modalContainer}>
+                <View style={styles.popup}>
+                  <Text
+                    style={[styles.popupTitle, { color: theme.text.primary }]}
+                  >
+                    Privacy Policy
+                  </Text>
+                  <ScrollView>
+                    <Text style={{ color: theme.text.secondary }}>
+                      SaveMyBill stores only the data you provide: receipts,
+                      product details, and reminders. No personal data is shared
+                      with third parties. Images are kept locally unless you
+                      explicitly sync them to cloud storage. We respect your
+                      privacy and only use data to improve your experience.
+                    </Text>
+                  </ScrollView>
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: theme.primary },
+                    ]}
+                    onPress={() => setShowPrivacyModal(false)}
+                  >
+                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Help Modal */}
+            <Modal visible={showHelpModal} transparent animationType="slide">
+              <View style={styles.modalContainer}>
+                <View style={styles.popup}>
+                  <Text
+                    style={[styles.popupTitle, { color: theme.text.primary }]}
+                  >
+                    Help & Support
+                  </Text>
+                  <Text style={{ color: theme.text.secondary }}>
+                    For support, please contact us at:
+                  </Text>
+                  <Text
+                    style={{ color: theme.text.primary, fontWeight: "600" }}
+                  >
+                    pokemongosathiemail22@gmail.com
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: theme.primary, marginTop: 20 },
+                    ]}
+                    onPress={() => setShowHelpModal(false)}
+                  >
+                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+
+            {/* Dark mode */}
+            <View style={styles.darkMode}>
+              <Text style={{ fontSize: 20, color: theme.text.secondary }}>
+                Dark Mode
+              </Text>
+              <Switch
+                value={isDarkMode}
+                onValueChange={handleDarkModeTogglePersist}
+              />
             </View>
-          )}
 
-          {/* User Settings */}
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => setShowUserSettings(!showUserSettings)}
-          >
-            <Text style={[styles.menuText, { color: theme.text.secondary }]}>
-              User Settings
-            </Text>
-          </TouchableOpacity>
-          {showUserSettings && (
-            <View style={styles.subMenu}>
-              <TouchableOpacity onPress={() => setShowTermsModal(true)}>
-                <Text style={[styles.subItem, { color: theme.text.body }]}>
-                  Terms & Conditions
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowPrivacyModal(true)}>
-                <Text style={[styles.subItem, { color: theme.text.body }]}>
-                  Privacy Policy
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowHelpModal(true)}>
-                <Text style={[styles.subItem, { color: theme.text.body }]}>
-                  Help
-                </Text>
-              </TouchableOpacity>
+            {/* Notifications */}
+            <View style={styles.darkMode}>
+              <Text style={{ fontSize: 20, color: theme.text.secondary }}>
+                Notifications
+              </Text>
+              <Switch
+                value={isNotificationOn}
+                onValueChange={handleToggleNotificationPersist}
+              />
             </View>
-          )}
 
-          {/* Log Out */}
-          <Pressable style={styles.logout} onPress={LogOut}>
-            <Text style={{ fontSize: 30, fontWeight: "500", color: "white" }}>
-              Log-Out
-            </Text>
-          </Pressable>
-        </ScrollView>
+            {/* Notification modal */}
+            <Modal
+              visible={notifModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setNotifModal(false)}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "rgba(0,0,0,0.3)",
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: "white",
+                    padding: 20,
+                    borderRadius: 12,
+                    minWidth: "70%",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text
+                    style={{ fontSize: 16, fontWeight: "bold", color: "green" }}
+                  >
+                    ✅ Notifications turned on
+                  </Text>
+                </View>
+              </View>
+            </Modal>
 
-        {/* Bottom Nav */}
-        <BottomNavBar currentScreen="Profile" navigation={navigation} />
-      </View>
-    </SafeAreaProvider>
+            {/* Account Settings */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setShowAccountSettings(!showAccountSettings)}
+            >
+              <Text style={[styles.menuText, { color: theme.text.secondary }]}>
+                Account Settings
+              </Text>
+            </TouchableOpacity>
+            {showAccountSettings && (
+              <View style={styles.subMenu}>
+                <TouchableOpacity onPress={() => setShowEditProfileModal(true)}>
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    Edit Profile
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowChangePasswordModal(true)}
+                >
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    Change Password
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* User Settings */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setShowUserSettings(!showUserSettings)}
+            >
+              <Text style={[styles.menuText, { color: theme.text.secondary }]}>
+                User Settings
+              </Text>
+            </TouchableOpacity>
+            {showUserSettings && (
+              <View style={styles.subMenu}>
+                <TouchableOpacity onPress={() => setShowTermsModal(true)}>
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    Terms & Conditions
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowPrivacyModal(true)}>
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    Privacy Policy
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowHelpModal(true)}>
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    Help
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Log Out */}
+            <Pressable style={styles.logout} onPress={LogOut}>
+              <Text style={{ fontSize: 30, fontWeight: "500", color: "white" }}>
+                Log-Out
+              </Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      </SafeAreaProvider>
+      {/* Bottom Nav */}
+      <BottomNavBar currentScreen="Profile" navigation={navigation} />
+    </View>
   );
 }
 
