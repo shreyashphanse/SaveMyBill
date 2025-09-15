@@ -80,16 +80,21 @@ export default function BillScreen({ navigation }: { navigation: any }) {
       const data = await res.json();
       const billsArray = data.bills || [];
 
-      const mappedBills = billsArray.map((bill: any) => ({
-        id: bill._id,
-        title: bill.title,
-        amount: bill.amount,
-        categoryId: bill.category,
-        categoryName: idToCategoryDict[bill.category] ?? "Unknown",
-        date: bill.expiryDate,
-        image: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
-        details: `${idToCategoryDict[bill.category] ?? ""} - ₹${bill.amount}`,
-      }));
+      const mappedBills = billsArray.map((bill: any) => {
+        console.log("Bill imageUrl:", bill.imageUrl);
+        return {
+          id: bill._id,
+          title: bill.title,
+          amount: bill.amount,
+          categoryId: bill.category,
+          categoryName: idToCategoryDict[bill.category] ?? "Unknown",
+          date: bill.expiryDate,
+          image: bill.imageUrl
+            ? `${API_BASE_URL}/${bill.imageUrl.replace(/^\/+/, "")}`
+            : null,
+          details: `${idToCategoryDict[bill.category] ?? ""} - ₹${bill.amount}`,
+        };
+      });
 
       setBills(mappedBills);
     };
@@ -295,18 +300,34 @@ export default function BillScreen({ navigation }: { navigation: any }) {
               <View style={styles.modalContent}>
                 {selectedBill && (
                   <>
-                    <Image
-                      source={{ uri: selectedBill.image }}
-                      style={styles.modalImage}
-                    />
+                    {selectedBill.image ? (
+                      <Image
+                        source={{ uri: selectedBill.image }}
+                        style={styles.modalImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          styles.modalImage,
+                          {
+                            justifyContent: "center",
+                            alignItems: "center",
+                            backgroundColor: "#888",
+                          },
+                        ]}
+                      >
+                        <Text style={{ color: "#fff", fontSize: 16 }}>
+                          No Image
+                        </Text>
+                      </View>
+                    )}
                     <Text style={styles.modalTitle}>{selectedBill.title}</Text>
                     <Text style={styles.modalDetails}>
-                      {" "}
-                      {selectedBill.details}{" "}
+                      {selectedBill.details}
                     </Text>
                     <Text style={styles.modalDetails}>
-                      {" "}
-                      Expiry Date: {selectedBill.date}{" "}
+                      Expiry Date: {selectedBill.date}
                     </Text>
                   </>
                 )}

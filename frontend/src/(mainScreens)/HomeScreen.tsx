@@ -125,7 +125,9 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
             amount: bill.amount,
             category: bill.categoryName || "—",
             date: bill.expiryDate,
-            imageUri: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
+            imageUri: bill.imageUrl
+              ? `${API_BASE_URL}/${bill.imageUrl.replace(/^\/+/, "")}`
+              : null,
             description: bill.description || "",
           }));
           setRecentBills(mappedBills);
