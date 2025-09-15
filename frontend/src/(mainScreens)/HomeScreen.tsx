@@ -540,6 +540,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 20,
     marginHorizontal: 10,
+    bottom: 13,
   },
   emojiBtn: { justifyContent: "center", alignItems: "center" },
   emoji: { fontSize: 36, marginBottom: 6 },
