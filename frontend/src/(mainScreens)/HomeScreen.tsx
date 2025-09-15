@@ -308,6 +308,59 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
                   ))}
                 </View>
               </View>
+              <View style={styles.emojiRow}>
+                {/* 1️⃣ Bill History */}
+                <TouchableOpacity
+                  style={styles.emojiBtn}
+                  onPress={() => navigation.navigate("Bill")}
+                >
+                  <Text style={styles.emoji}>🧾</Text>
+                  <Text
+                    style={[styles.emojiLabel, { color: theme.text.secondary }]}
+                  >
+                    Bill History
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 2️⃣ Manage Notifications */}
+                <TouchableOpacity
+                  style={styles.emojiBtn}
+                  onPress={() => navigation.navigate("Profile")}
+                >
+                  <Text style={styles.emoji}>🔔</Text>
+                  <Text
+                    style={[styles.emojiLabel, { color: theme.text.secondary }]}
+                  >
+                    Notifications
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 3️⃣ Filter Bills */}
+                <TouchableOpacity
+                  style={styles.emojiBtn}
+                  onPress={() => navigation.navigate("Bill")}
+                >
+                  <Text style={styles.emoji}>🔍</Text>
+                  <Text
+                    style={[styles.emojiLabel, { color: theme.text.secondary }]}
+                  >
+                    Filter Bills
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 4️⃣ Generate Report */}
+                <TouchableOpacity
+                  style={styles.emojiBtn}
+                  onPress={() => navigation.navigate("Report")}
+                >
+                  <Text style={styles.emoji}>📊</Text>
+                  <Text
+                    style={[styles.emojiLabel, { color: theme.text.secondary }]}
+                  >
+                    Report
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </>
           }
         />
@@ -369,6 +422,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#eee",
   },
+  emojiRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+    marginHorizontal: 10,
+    bottom: 20,
+  },
+  emojiBtn: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emoji: { fontSize: 36, marginBottom: 6 },
+  emojiLabel: { fontSize: 12, textAlign: "center" },
+
   recentImage: {
     width: 72,
     height: 72,

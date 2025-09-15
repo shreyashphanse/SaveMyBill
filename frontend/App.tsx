@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AuthStack from "./src/Navigation/AuthStack";
 import { UserProvider, useUser } from "./src/(extraScreens)/UserContext";
 import * as Notifications from "expo-notifications";
+import { CategoryProvider } from "./src/components/categoryContext";
 
 // Main screens
 import HomeScreen from "./src/(mainScreens)/HomeScreen";
@@ -86,9 +87,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <NavigationContainer>
-          <MainNavigator />
-        </NavigationContainer>
+        <CategoryProvider>
+          <NavigationContainer>
+            <MainNavigator />
+          </NavigationContainer>
+        </CategoryProvider>
       </UserProvider>
     </ThemeProvider>
   );

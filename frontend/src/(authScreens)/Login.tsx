@@ -1,18 +1,37 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  TextInput,
+  Button,
+  Text,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "src/firebaseConfig";
+import { useUser } from "../(extraScreens)/UserContext"; // 👈 import context
 
 export default function Login({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const { setUser } = useUser(); // 👈 get setUser from context
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const loggedInUser = userCredential.user;
+
+      // 👇 update global user context
+      setUser({ uid: loggedInUser.uid, email: loggedInUser.email });
+
       setMessage("Login successful!");
-      navigation.replace("MainStack"); // replace with your main app screen
+      Alert.alert("Success", "You are now logged in.");
+      // No need for navigation.replace("MainStack") – MainNavigator will switch automatically
     } catch (err: any) {
       setMessage(err.message);
     }

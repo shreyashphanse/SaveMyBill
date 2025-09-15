@@ -1,4 +1,3 @@
-// CategoryContext.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { API_BASE_URL } from "D:/coding/Major_Projects/SaveMyBill/frontend/config/app";
 import { useUser } from "src/(extraScreens)/UserContext";
@@ -10,10 +9,14 @@ type Category = {
 
 type CategoryContextType = {
   categories: Category[];
-  categoryDict: { [label: string]: string }; // label => _id
+  categoryDict: { [label: string]: string }; // name => _id (for dropdown)
+  idToCategoryDict: { [id: string]: string }; // _id => name (for bills)
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   setCategoryDict: React.Dispatch<
     React.SetStateAction<{ [label: string]: string }>
+  >;
+  setIdToCategoryDict: React.Dispatch<
+    React.SetStateAction<{ [id: string]: string }>
   >;
 };
 
@@ -26,12 +29,16 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user } = useUser();
   const userId = user?.uid;
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDict, setCategoryDict] = useState<{ [label: string]: string }>(
     {}
   );
+  const [idToCategoryDict, setIdToCategoryDict] = useState<{
+    [id: string]: string;
+  }>({});
 
-  // Fetch categories from DB and initialize dictionary
+  // Fetch categories from DB and initialize dictionaries
   useEffect(() => {
     if (!userId) return;
 
@@ -41,18 +48,30 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
         const cats: Category[] = data.categories || [];
         setCategories(cats);
 
-        const dict: { [label: string]: string } = {};
+        const nameToId: { [label: string]: string } = {};
+        const idToName: { [id: string]: string } = {};
+
         cats.forEach((cat) => {
-          dict[cat.name] = cat._id;
+          nameToId[cat.name] = cat._id;
+          idToName[cat._id] = cat.name;
         });
-        setCategoryDict(dict);
+
+        setCategoryDict(nameToId);
+        setIdToCategoryDict(idToName);
       })
       .catch((err) => console.error("Error fetching categories:", err));
   }, [userId]);
 
   return (
     <CategoryContext.Provider
-      value={{ categories, categoryDict, setCategories, setCategoryDict }}
+      value={{
+        categories,
+        categoryDict,
+        idToCategoryDict,
+        setCategories,
+        setCategoryDict,
+        setIdToCategoryDict,
+      }}
     >
       {children}
     </CategoryContext.Provider>

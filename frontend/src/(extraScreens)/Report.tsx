@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useCategory } from "src/components/categoryContext";
+
 import {
   View,
   Text,
@@ -7,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { PieChart } from "react-native-chart-kit";
-import { API_BASE_URL } from "D:/coding/Major_Projects/SaveMyBill/frontend/config/app";
+import { PIE_BASE_URL } from "D:/coding/Major_Projects/SaveMyBill/frontend/config/app";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -15,6 +17,7 @@ export default function Report({ navigation }: { navigation: any }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { idToCategoryDict } = useCategory();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -25,15 +28,14 @@ export default function Report({ navigation }: { navigation: any }) {
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || Object.keys(idToCategoryDict).length === 0) return;
 
     const fetchChartData = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/piechart?userId=${userId}`);
+        const res = await fetch(`${PIE_BASE_URL}/piechart?userId=${userId}`);
         const data = await res.json();
 
         if (data.success) {
-          // Prepare data for PieChart
           const colors = [
             "#FF6384",
             "#36A2EB",
@@ -42,7 +44,7 @@ export default function Report({ navigation }: { navigation: any }) {
             "#2ECC71",
           ];
           const chart = data.data.map((item: any, index: number) => ({
-            name: item.category,
+            name: item.category, // mapping id -> name
             population: item.total,
             color: colors[index % colors.length],
             legendFontColor: "#333",
@@ -60,7 +62,7 @@ export default function Report({ navigation }: { navigation: any }) {
     };
 
     fetchChartData();
-  }, [userId]);
+  }, [userId, idToCategoryDict]); // <- include idToCategoryDict as dependency
 
   const screenWidth = Dimensions.get("window").width;
 

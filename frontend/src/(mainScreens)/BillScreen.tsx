@@ -23,7 +23,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
   const { user } = useUser();
   const userId = user?.uid;
-  const { categoryDict } = useCategory(); // ✅ get dictionary from context
+  const { categoryDict, idToCategoryDict } = useCategory();
 
   const handleaddbill = () => {
     navigation?.navigate?.("Upload");
@@ -73,30 +73,29 @@ export default function BillScreen({ navigation }: { navigation: any }) {
 
   // Fetch bills
   useEffect(() => {
-    if (!userId) return;
-    fetch(`${API_BASE_URL}/api/bills?userId=${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const billsArray = data.bills || [];
-        const mappedBills = billsArray.map((bill: any) => ({
-          id: bill._id,
-          title: bill.title,
-          amount: bill.amount,
-          categoryId: bill.category,
-          categoryName:
-            bill.categoryName ??
-            Object.keys(categoryDict).find(
-              (name) => categoryDict[name] === bill.category
-            ) ??
-            "Unknown",
-          date: bill.expiryDate,
-          image: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
-          details: `${bill.categoryName ?? ""} - ₹${bill.amount}`,
-        }));
-        setBills(mappedBills);
-      })
-      .catch((err) => console.error("Error fetching bills:", err));
-  }, [userId, categoryDict]);
+    if (!userId || Object.keys(idToCategoryDict).length === 0) return;
+
+    const fetchBills = async () => {
+      const res = await fetch(`${API_BASE_URL}/api/bills?userId=${userId}`);
+      const data = await res.json();
+      const billsArray = data.bills || [];
+
+      const mappedBills = billsArray.map((bill: any) => ({
+        id: bill._id,
+        title: bill.title,
+        amount: bill.amount,
+        categoryId: bill.category,
+        categoryName: idToCategoryDict[bill.category] ?? "Unknown",
+        date: bill.expiryDate,
+        image: bill.imageUrl ? `${API_BASE_URL}/${bill.imageUrl}` : null,
+        details: `${idToCategoryDict[bill.category] ?? ""} - ₹${bill.amount}`,
+      }));
+
+      setBills(mappedBills);
+    };
+
+    fetchBills();
+  }, [userId, idToCategoryDict]);
 
   // Handle long press on bills
   const handleLongPress = (id: string) => {

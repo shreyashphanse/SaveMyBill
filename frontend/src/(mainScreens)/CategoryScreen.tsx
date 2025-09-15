@@ -29,7 +29,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
   const { user } = useUser();
   const userId = user?.uid;
-  const { setCategoryDict } = useCategory(); // ✅ context function
+  const { setCategoryDict, setIdToCategoryDict } = useCategory();
 
   // State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -53,6 +53,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
   // Fetch categories
   const fetchCategories = async () => {
     if (!userId) return;
+
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/categories?userId=${userId}`
@@ -60,24 +61,26 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
       const data = await res.json();
       const raw = Array.isArray(data?.categories) ? data.categories : [];
 
-      const mapped: Category[] = raw.map((cat: any, idx: number) => {
-        const _id = cat._id ?? cat.id ?? String(idx);
-        return {
-          _id,
-          name: cat.name ?? "Unnamed",
-          amount: cat.totalAmount ?? cat.amount ?? 0,
-          bills: cat.bills ?? cat.billsCount ?? cat.numBills ?? 0,
-        };
-      });
+      // Map raw categories
+      const mapped: Category[] = raw.map((cat: any, idx: number) => ({
+        _id: cat._id ?? cat.id ?? String(idx),
+        name: cat.name ?? "Unnamed",
+        amount: cat.totalAmount ?? cat.amount ?? 0,
+        bills: cat.bills ?? cat.billsCount ?? cat.numBills ?? 0,
+      }));
 
-      // ✅ Build dictionary and update context
-      const dict: Record<string, string> = {};
+      // Build dictionaries and update context
+      const nameToId: Record<string, string> = {};
+      const idToName: Record<string, string> = {};
       mapped.forEach((c) => {
-        dict[c.name] = c._id;
+        nameToId[c.name] = c._id;
+        idToName[c._id] = c.name;
       });
-      setCategoryDict(dict);
 
-      // ✅ Update local categories state
+      setCategoryDict(nameToId);
+      setIdToCategoryDict(idToName);
+
+      // Update local categories state
       setCategories(mapped);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -111,41 +114,41 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
 
     try {
       for (const categoryId of selectedCategories) {
-        const res = await fetch(
-          `${API_BASE_URL}/api/categories/${categoryId}`,
-          {
-            method: "DELETE",
-          }
+        // 1️⃣ Fetch bills under this category
+        const resBills = await fetch(
+          `${API_BASE_URL}/api/bills?category=${categoryId}`
         );
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`Failed to delete category ${categoryId}: ${text}`);
-        }
+        const data = await resBills.json();
+        const bills = data.bills || [];
+
+        // 2️⃣ Delete each bill
+        // for (const bill of bills) {
+        //   await fetch(`${API_BASE_URL}/api/bills/${bill._id}`, {
+        //     method: "DELETE",
+        //   });
+        // }
+
+        // 3️⃣ Delete the category
+        await fetch(`${API_BASE_URL}/api/categories/${categoryId}`, {
+          method: "DELETE",
+        });
       }
 
-      // Remove from local state
+      // 4️⃣ Update local state
       setCategories((prev) =>
         prev.filter((cat) => !selectedCategories.includes(cat._id))
       );
-
-      // Remove from shared context
-      setCategoryDict((prev) => {
-        const copy = { ...prev };
-        selectedCategories.forEach((id) => {
-          const key = Object.keys(copy).find((k) => copy[k] === id);
-          if (key) delete copy[key];
-        });
-        return copy;
-      });
-
       setSelectedCategories([]);
       setIsSelectionMode(false);
 
       setSuccessModal(true);
       setTimeout(() => setSuccessModal(false), 1500);
     } catch (err) {
-      console.error("Error deleting categories:", err);
-      Alert.alert("Error", "Failed to delete selected categories");
+      console.error("Error deleting categories and bills:", err);
+      Alert.alert(
+        "Error",
+        "Failed to delete selected categories or their bills"
+      );
     }
   };
 

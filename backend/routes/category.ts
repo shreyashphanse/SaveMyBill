@@ -4,20 +4,29 @@ import { Bill, IBill } from "../models/billModel";
 
 const router = express.Router();
 
-// Delete a category by ID
+// Delete a category by ID along with its bills
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    // 1️⃣ Delete all bills under this category
+    await Bill.deleteMany({ category: id });
+
+    // 2️⃣ Delete the category itself
     const deletedCategory = await categoryModel.findByIdAndDelete(id);
 
     if (!deletedCategory) {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.status(200).json({ message: "Category deleted successfully" });
+    res
+      .status(200)
+      .json({ message: "Category and its bills deleted successfully" });
   } catch (error) {
-    console.error("Error deleting category:", error);
-    res.status(500).json({ message: "Server error while deleting category" });
+    console.error("Error deleting category and its bills:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while deleting category and its bills" });
   }
 });
 

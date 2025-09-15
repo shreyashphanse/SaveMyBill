@@ -125,6 +125,42 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     }
   };
 
+  // Helper function to validate day, month, year
+  // Soft validation function
+  const validateDateSoft = (d: string, m: string, y: string) => {
+    let day = Number(d);
+    let month = Number(m);
+    let year = Number(y);
+    const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 6;
+
+    // Validate month
+    if (month > 12) month = 12;
+    if (month < 1) month = 1;
+
+    // Validate year
+    if (year > maxYear) year = maxYear;
+    if (year < currentYear) year = currentYear;
+
+    // Determine max days in month
+    let maxDays = 31;
+    if ([4, 6, 9, 11].includes(month)) maxDays = 30;
+    else if (month === 2) {
+      maxDays =
+        year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28;
+    }
+
+    // Validate day
+    if (day > maxDays) day = maxDays;
+    if (day < 1) day = 1;
+
+    return {
+      day: day.toString(),
+      month: month.toString(),
+      year: year.toString(),
+    };
+  };
+
   const handleUpload = async () => {
     if (
       !file ||
@@ -265,8 +301,15 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
             keyboardType="numeric"
             maxLength={2}
             value={day}
-            onChangeText={setDay}
+            onChangeText={setDay} // user types freely
+            onEndEditing={() => {
+              const validated = validateDateSoft(day, month, year);
+              setDay(validated.day);
+              setMonth(validated.month);
+              setYear(validated.year);
+            }}
           />
+
           <TextInput
             style={[styles.input, styles.dateInput]}
             placeholder="MM"
@@ -274,7 +317,14 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
             maxLength={2}
             value={month}
             onChangeText={setMonth}
+            onEndEditing={() => {
+              const validated = validateDateSoft(day, month, year);
+              setDay(validated.day);
+              setMonth(validated.month);
+              setYear(validated.year);
+            }}
           />
+
           <TextInput
             style={[styles.input, styles.dateInput, { flex: 2 }]}
             placeholder="YYYY"
@@ -282,6 +332,12 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
             maxLength={4}
             value={year}
             onChangeText={setYear}
+            onEndEditing={() => {
+              const validated = validateDateSoft(day, month, year);
+              setDay(validated.day);
+              setMonth(validated.month);
+              setYear(validated.year);
+            }}
           />
         </View>
 
