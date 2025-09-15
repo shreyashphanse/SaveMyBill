@@ -56,6 +56,9 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
 
+  const user = auth.currentUser;
+  console.log(user?.displayName);
+
   const setProfileImagePersist = async (uri: string | null) => {
     setProfileImage(uri);
     if (uri) await AsyncStorage.setItem("profileImage", uri);
@@ -105,11 +108,6 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
 
   const removeProfilePhoto = () => setProfileImagePersist(null);
 
-  const updateName = () => {
-    setName(newName);
-    setShowEditProfileModal(false);
-  };
-
   const updatePassword = async () => {
     if (!auth.currentUser) {
       Alert.alert("Error", "No user is logged in!");
@@ -137,27 +135,70 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
       Alert.alert("Error", error.message || "Failed to update password.");
     }
   };
-
+  // inside useEffect → loadUserData
   useEffect(() => {
     const loadUserData = async () => {
-      const storedName = await AsyncStorage.getItem("userName");
       const storedProfileImage = await AsyncStorage.getItem("profileImage");
       const storedNotif = await AsyncStorage.getItem("isNotificationOn");
       const storedDarkMode = await AsyncStorage.getItem("darkMode");
 
-      if (storedName) setName(storedName);
       if (storedProfileImage) setProfileImage(storedProfileImage);
       if (storedNotif) setIsNotificationOn(JSON.parse(storedNotif));
       if (storedDarkMode) setIsDarkMode(JSON.parse(storedDarkMode));
 
-      // Always take email from Firebase auth
-      if (auth.currentUser?.email) {
-        setEmail(auth.currentUser.email);
-        await AsyncStorage.setItem("userEmail", auth.currentUser.email); // keep storage updated
+      // ✅ Always sync from Firebase first
+      if (auth.currentUser) {
+        if (auth.currentUser.displayName) {
+          setName(auth.currentUser.displayName);
+          setNewName(auth.currentUser.displayName); // keep modal input in sync
+          await AsyncStorage.setItem("userName", auth.currentUser.displayName);
+        }
+        if (auth.currentUser.email) {
+          setEmail(auth.currentUser.email);
+          await AsyncStorage.setItem("userEmail", auth.currentUser.email);
+        }
+      } else {
+        // fallback to AsyncStorage
+        const storedName = await AsyncStorage.getItem("userName");
+        if (storedName) {
+          setName(storedName);
+          setNewName(storedName);
+        }
       }
     };
+
     loadUserData();
-  }, [auth.currentUser]);
+  }, []);
+
+  // useEffect(() => {
+  //   const loadUserData = async () => {
+  //     const storedProfileImage = await AsyncStorage.getItem("profileImage");
+  //     const storedNotif = await AsyncStorage.getItem("isNotificationOn");
+  //     const storedDarkMode = await AsyncStorage.getItem("darkMode");
+
+  //     if (storedProfileImage) setProfileImage(storedProfileImage);
+  //     if (storedNotif) setIsNotificationOn(JSON.parse(storedNotif));
+  //     if (storedDarkMode) setIsDarkMode(JSON.parse(storedDarkMode));
+
+  //     // Always take from Firebase first
+  //     if (auth.currentUser) {
+  //       if (auth.currentUser.displayName) {
+  //         setName(auth.currentUser.displayName);
+  //         await AsyncStorage.setItem("userName", auth.currentUser.displayName);
+  //       }
+  //       if (auth.currentUser.email) {
+  //         setEmail(auth.currentUser.email);
+  //         await AsyncStorage.setItem("userEmail", auth.currentUser.email);
+  //       }
+  //     } else {
+  //       // fallback to stored AsyncStorage if no Firebase user
+  //       const storedName = await AsyncStorage.getItem("userName");
+  //       if (storedName) setName(storedName);
+  //     }
+  //   };
+
+  //   loadUserData();
+  // }, [auth.currentUser]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -246,7 +287,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                             setName(newName);
                             await AsyncStorage.setItem("userName", newName);
                           }
-                          setNewName(""); // clear input
+                          setNewName(""); // 👈 clear input after saving
                           setShowEditProfileModal(false);
                         } catch (error: any) {
                           Alert.alert(

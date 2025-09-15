@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, TouchableOpacity } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { View, TextInput, Text, TouchableOpacity } from "react-native";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "src/firebaseConfig";
 
 export default function Signup({ navigation }: any) {
+  const [name, setName] = useState(""); // 👈 new state for name
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -11,7 +12,16 @@ export default function Signup({ navigation }: any) {
 
   const handleSignup = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await updateProfile(userCredential.user, {
+        displayName: name,
+      });
+
       setMessage("Account created! You can now log in.");
       navigation.navigate("Login");
     } catch (err: any) {
@@ -21,24 +31,14 @@ export default function Signup({ navigation }: any) {
         case "auth/invalid-email":
           errorMsg = "Invalid email format. Please check again.";
           break;
-        case "auth/user-not-found":
-          errorMsg = "No account found with this email.";
-          break;
-        case "auth/wrong-password":
-          errorMsg = "Incorrect password. Try again.";
-          break;
-        case "auth/too-many-requests":
-          errorMsg =
-            "Too many failed attempts. Please wait and try again later.";
-          break;
         case "auth/missing-password":
-          errorMsg = "password field empty. Please enter password.";
+          errorMsg = "Password field empty. Please enter password.";
           break;
-        case "auth/invalid-credential":
-          errorMsg = "password is wrong. Please check password.";
+        case "auth/email-already-in-use":
+          errorMsg = "This email is already registered.";
           break;
         default:
-          errorMsg = err.message; // fallback to Firebase’s default msg
+          errorMsg = err.message;
       }
 
       setMessage(errorMsg);
@@ -57,6 +57,21 @@ export default function Signup({ navigation }: any) {
       <Text style={{ fontSize: 45, fontWeight: "bold", color: "#003366" }}>
         Sign-Up
       </Text>
+
+      {/* 👇 Name input */}
+      <TextInput
+        placeholder="Enter your name"
+        value={name}
+        onChangeText={setName}
+        style={{
+          borderWidth: 2,
+          borderRadius: 10,
+          padding: 10,
+          marginBottom: 10,
+          width: "100%",
+        }}
+      />
+
       <TextInput
         placeholder="Enter your email"
         value={email}
@@ -71,6 +86,7 @@ export default function Signup({ navigation }: any) {
           width: "100%",
         }}
       />
+
       <View
         style={{
           flexDirection: "row",
@@ -101,11 +117,11 @@ export default function Signup({ navigation }: any) {
       <TouchableOpacity
         style={{
           width: "50%",
-          height: 50, // better to use fixed height instead of %
+          height: 50,
           backgroundColor: "#003366",
           borderRadius: 13,
-          justifyContent: "center", // centers vertically
-          alignItems: "center", // centers horizontally
+          justifyContent: "center",
+          alignItems: "center",
         }}
         onPress={handleSignup}
       >
