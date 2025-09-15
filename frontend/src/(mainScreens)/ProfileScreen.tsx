@@ -141,21 +141,23 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
   useEffect(() => {
     const loadUserData = async () => {
       const storedName = await AsyncStorage.getItem("userName");
-      const storedEmail = await AsyncStorage.getItem("userEmail");
-      const storedPassword = await AsyncStorage.getItem("userPassword");
       const storedProfileImage = await AsyncStorage.getItem("profileImage");
       const storedNotif = await AsyncStorage.getItem("isNotificationOn");
       const storedDarkMode = await AsyncStorage.getItem("darkMode");
 
       if (storedName) setName(storedName);
-      if (storedEmail) setEmail(storedEmail);
-      if (storedPassword) setPassword(storedPassword);
       if (storedProfileImage) setProfileImage(storedProfileImage);
       if (storedNotif) setIsNotificationOn(JSON.parse(storedNotif));
       if (storedDarkMode) setIsDarkMode(JSON.parse(storedDarkMode));
+
+      // Always take email from Firebase auth
+      if (auth.currentUser?.email) {
+        setEmail(auth.currentUser.email);
+        await AsyncStorage.setItem("userEmail", auth.currentUser.email); // keep storage updated
+      }
     };
     loadUserData();
-  }, []);
+  }, [auth.currentUser]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -458,7 +460,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
             </View>
 
             {/* Notifications */}
-            <View style={styles.darkMode}>
+            <View style={styles.Notify}>
               <Text style={{ fontSize: 20, color: theme.text.secondary }}>
                 Notifications
               </Text>
@@ -583,7 +585,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 5,
+    top: 5,
+  },
+  Notify: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   logout: {
     height: 50,

@@ -7,6 +7,7 @@ export default function Signup({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignup = async () => {
     try {
@@ -14,7 +15,33 @@ export default function Signup({ navigation }: any) {
       setMessage("Account created! You can now log in.");
       navigation.navigate("Login");
     } catch (err: any) {
-      setMessage(err.message);
+      let errorMsg = "Something went wrong. Please try again.";
+
+      switch (err.code) {
+        case "auth/invalid-email":
+          errorMsg = "Invalid email format. Please check again.";
+          break;
+        case "auth/user-not-found":
+          errorMsg = "No account found with this email.";
+          break;
+        case "auth/wrong-password":
+          errorMsg = "Incorrect password. Try again.";
+          break;
+        case "auth/too-many-requests":
+          errorMsg =
+            "Too many failed attempts. Please wait and try again later.";
+          break;
+        case "auth/missing-password":
+          errorMsg = "password field empty. Please enter password.";
+          break;
+        case "auth/invalid-credential":
+          errorMsg = "password is wrong. Please check password.";
+          break;
+        default:
+          errorMsg = err.message; // fallback to Firebase’s default msg
+      }
+
+      setMessage(errorMsg);
     }
   };
 
@@ -44,19 +71,33 @@ export default function Signup({ navigation }: any) {
           width: "100%",
         }}
       />
-      <TextInput
-        placeholder="Enter your password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
+      <View
         style={{
+          flexDirection: "row",
+          alignItems: "center",
           borderWidth: 2,
           borderRadius: 10,
-          padding: 10,
           marginBottom: 20,
-          width: "100%",
+          paddingHorizontal: 10,
         }}
-      />
+      >
+        <TextInput
+          placeholder="Enter your password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+          }}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Text style={{ color: "#003366", fontWeight: "600", marginLeft: 10 }}>
+            {showPassword ? "Hide" : "Show"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity
         style={{
           width: "50%",
