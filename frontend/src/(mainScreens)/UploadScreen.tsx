@@ -17,6 +17,7 @@ import BottomNavBar from "../components/BottomNavBar";
 import { API_BASE_URL } from "config/app";
 import { auth } from "../firebaseConfig";
 import { scheduleBillReminder } from "../utilities/notificationUtils";
+import { OCR_BASE_URL } from "config/app";
 
 export default function UploadScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
@@ -32,14 +33,31 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
 
+  const [selectedHour, setSelectedHour] = useState<string>("12");
+  const [selectedMinute, setSelectedMinute] = useState<string>("00");
+  const [selectedAmPm, setSelectedAmPm] = useState<string>("AM");
+
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
 
+  const [uploadedBill, setUploadedBill] = useState<{
+    billId: string;
+    storeName: string;
+  } | null>(null);
+
   const [successModal, setSuccessModal] = useState(false);
 
-  const OCR_API_URL = "http://10.151.103.24:5001/ocr";
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+  const [hourOpen, setHourOpen] = useState(false);
+  const [minuteOpen, setMinuteOpen] = useState(false);
+  const [amPmOpen, setAmPmOpen] = useState(false);
 
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const OCR_API_URL = `${OCR_BASE_URL}/ocr`;
+
+  // Auth listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) setUserId(user.uid);
@@ -48,6 +66,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     return () => unsubscribe();
   }, []);
 
+  // Fetch categories
   useEffect(() => {
     if (!userId) return;
     const fetchCategories = async () => {
@@ -73,6 +92,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     fetchCategories();
   }, [userId]);
 
+  // Pick file
   const pickFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -89,6 +109,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     }
   };
 
+  // OCR
   const processOCR = async (fileAsset: any) => {
     if (!fileAsset) return;
     const formData = new FormData();
@@ -125,8 +146,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     }
   };
 
-  // Helper function to validate day, month, year
-  // Soft validation function
+  // Soft date validation
   const validateDateSoft = (d: string, m: string, y: string) => {
     let day = Number(d);
     let month = Number(m);
@@ -134,15 +154,11 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 6;
 
-    // Validate month
     if (month > 12) month = 12;
     if (month < 1) month = 1;
-
-    // Validate year
     if (year > maxYear) year = maxYear;
     if (year < currentYear) year = currentYear;
 
-    // Determine max days in month
     let maxDays = 31;
     if ([4, 6, 9, 11].includes(month)) maxDays = 30;
     else if (month === 2) {
@@ -150,7 +166,6 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
         year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28;
     }
 
-    // Validate day
     if (day > maxDays) day = maxDays;
     if (day < 1) day = 1;
 
@@ -161,6 +176,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     };
   };
 
+  // Handle upload
   const handleUpload = async () => {
     if (
       !file ||
@@ -204,28 +220,34 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
 
       if (data.success) {
         setSuccessModal(true);
+        setUploadedBill({ billId: data.billId, storeName });
+
         setTimeout(() => {
           setSuccessModal(false);
-          if (expiryDate) {
-            Alert.alert(
-              "Set Reminder?",
-              `This bill expires on ${expiryDate}. Do you want to set a reminder?`,
-              [
-                { text: "No", onPress: () => console.log("Reminder skipped") },
-                {
-                  text: "Yes",
-                  onPress: async () => {
-                    await scheduleBillReminder(
-                      expiryDate,
-                      data.billId,
-                      storeName
-                    );
-                  },
+
+          // Ask for reminder
+          Alert.alert(
+            "Set Reminder?",
+            `This bill expires on ${expiryDate}. Do you want to set a reminder?`,
+            [
+              { text: "No", onPress: () => console.log("Reminder skipped") },
+              {
+                text: "Yes",
+                onPress: () => {
+                  const parts = expiryDate.split("/");
+                  const d = new Date(
+                    Number(parts[2]),
+                    Number(parts[1]) - 1,
+                    Number(parts[0])
+                  );
+                  setSelectedDate(d);
+                  setShowTimeDropdown(true);
                 },
-              ]
-            );
-          }
-          // Reset
+              },
+            ]
+          );
+
+          // Reset fields
           setFile(null);
           setAmount("");
           setSelectedCategory(null);
@@ -304,7 +326,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
               keyboardType="numeric"
               maxLength={2}
               value={day}
-              onChangeText={setDay} // user types freely
+              onChangeText={setDay}
               onEndEditing={() => {
                 const validated = validateDateSoft(day, month, year);
                 setDay(validated.day);
@@ -360,8 +382,86 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
             <Text style={styles.uploadText}>Upload</Text>
           </TouchableOpacity>
+
+          {/* Time selection dropdowns */}
+          {showTimeDropdown && selectedDate && uploadedBill && (
+            <View style={{ marginVertical: 10 }}>
+              {/* Dropdowns in one line */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <DropDownPicker
+                  open={hourOpen}
+                  value={selectedHour}
+                  items={Array.from({ length: 12 }, (_, i) => ({
+                    label: (i + 1).toString().padStart(2, "0"),
+                    value: (i + 1).toString().padStart(2, "0"),
+                  }))}
+                  setOpen={setHourOpen}
+                  setValue={setSelectedHour}
+                  containerStyle={{ flex: 1, marginRight: 5 }}
+                />
+
+                <DropDownPicker
+                  open={minuteOpen}
+                  value={selectedMinute}
+                  items={Array.from({ length: 60 }, (_, i) => ({
+                    label: i.toString().padStart(2, "0"),
+                    value: i.toString().padStart(2, "0"),
+                  }))}
+                  setOpen={setMinuteOpen}
+                  setValue={setSelectedMinute}
+                  containerStyle={{ flex: 1, marginHorizontal: 5 }}
+                />
+
+                <DropDownPicker
+                  open={amPmOpen}
+                  value={selectedAmPm}
+                  items={[
+                    { label: "AM", value: "AM" },
+                    { label: "PM", value: "PM" },
+                  ]}
+                  setOpen={setAmPmOpen}
+                  setValue={setSelectedAmPm}
+                  containerStyle={{ flex: 1, marginLeft: 5 }}
+                />
+              </View>
+
+              {/* Set Reminder button in the next line */}
+              <TouchableOpacity
+                style={[styles.uploadButton, { marginTop: 10, width: "100%" }]}
+                onPress={() => {
+                  // Convert selected time to 24-hour and schedule reminder
+                  let hour24 = Number(selectedHour);
+                  if (selectedAmPm === "PM" && hour24 !== 12) hour24 += 12;
+                  if (selectedAmPm === "AM" && hour24 === 12) hour24 = 0;
+
+                  const reminderDate = new Date(selectedDate);
+                  reminderDate.setHours(hour24, Number(selectedMinute), 0);
+
+                  scheduleBillReminder(
+                    reminderDate.toISOString(),
+                    uploadedBill.billId,
+                    uploadedBill.storeName
+                  );
+
+                  Alert.alert(
+                    "Reminder Set",
+                    `Reminder scheduled for ${reminderDate.toLocaleString()}`
+                  );
+                  setShowTimeDropdown(false);
+                }}
+              >
+                <Text style={styles.uploadText}>Set Reminder</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
+        {/* Success modal */}
         <Modal
           visible={successModal}
           animationType="fade"
@@ -376,6 +476,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           </View>
         </Modal>
       </SafeAreaProvider>
+
       <BottomNavBar currentScreen="Upload" navigation={navigation} />
     </View>
   );

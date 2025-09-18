@@ -52,6 +52,9 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
 
   const { setUser } = useUser();
 
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showAboutSection, setShowAboutSection] = useState(false);
+
   const [newName, setNewName] = useState(name);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
@@ -400,29 +403,25 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
             <Modal visible={showTermsModal} transparent animationType="slide">
               <View style={styles.modalContainer}>
                 <View style={styles.popup}>
-                  <Text
-                    style={[styles.popupTitle, { color: theme.text.primary }]}
-                  >
+                  <Text style={[styles.popupTitle, { color: "black" }]}>
                     Terms & Conditions
                   </Text>
                   <ScrollView>
-                    <Text style={{ color: theme.text.secondary }}>
-                      By using SaveMyBill, you agree to store receipts, bills,
-                      and product details responsibly. We are not responsible
-                      for lost data, expired reminders, or incorrect OCR
-                      readings. Do not misuse the app for fraudulent warranty
-                      claims. SaveMyBill is designed only for personal
-                      record-keeping and reminder purposes.
+                    <Text style={{ color: "grey", lineHeight: 22 }}>
+                      • By using SaveMyBill, you agree to store receipts, bills,
+                      and product details responsibly.{"\n\n"}• We are not
+                      responsible for lost data, expired reminders, or incorrect
+                      OCR readings.{"\n\n"}• Do not misuse the app for
+                      fraudulent warranty claims.{"\n\n"}• SaveMyBill is
+                      designed solely for personal record-keeping and reminder
+                      purposes.
                     </Text>
                   </ScrollView>
                   <Pressable
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: theme.primary },
-                    ]}
+                    style={[styles.modalBtn, { backgroundColor: "pink" }]}
                     onPress={() => setShowTermsModal(false)}
                   >
-                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                    <Text style={{ color: "red" }}>Close</Text>
                   </Pressable>
                 </View>
               </View>
@@ -432,28 +431,24 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
             <Modal visible={showPrivacyModal} transparent animationType="slide">
               <View style={styles.modalContainer}>
                 <View style={styles.popup}>
-                  <Text
-                    style={[styles.popupTitle, { color: theme.text.primary }]}
-                  >
+                  <Text style={[styles.popupTitle, { color: "black" }]}>
                     Privacy Policy
                   </Text>
                   <ScrollView>
-                    <Text style={{ color: theme.text.secondary }}>
-                      SaveMyBill stores only the data you provide: receipts,
-                      product details, and reminders. No personal data is shared
-                      with third parties. Images are kept locally unless you
-                      explicitly sync them to cloud storage. We respect your
-                      privacy and only use data to improve your experience.
+                    <Text style={{ color: "grey" }}>
+                      • SaveMyBill stores only the data you provide: receipts,
+                      product details, and reminders.{"\n\n"}• No personal data
+                      is shared with third parties.{"\n\n"}• Images are kept
+                      locally unless you explicitly sync them to cloud storage.
+                      {"\n\n"}• We respect your privacy and use your data solely
+                      to improve your experience.
                     </Text>
                   </ScrollView>
                   <Pressable
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: theme.primary },
-                    ]}
+                    style={[styles.modalBtn, { backgroundColor: "pink" }]}
                     onPress={() => setShowPrivacyModal(false)}
                   >
-                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                    <Text style={{ color: "red" }}>Close</Text>
                   </Pressable>
                 </View>
               </View>
@@ -463,27 +458,23 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
             <Modal visible={showHelpModal} transparent animationType="slide">
               <View style={styles.modalContainer}>
                 <View style={styles.popup}>
-                  <Text
-                    style={[styles.popupTitle, { color: theme.text.primary }]}
-                  >
+                  <Text style={[styles.popupTitle, { color: "black" }]}>
                     Help & Support
                   </Text>
-                  <Text style={{ color: theme.text.secondary }}>
+                  <Text style={{ color: "grey" }}>
                     For support, please contact us at:
                   </Text>
-                  <Text
-                    style={{ color: theme.text.primary, fontWeight: "600" }}
-                  >
+                  <Text style={{ color: "blue", fontWeight: "600" }}>
                     pokemongosathiemail22@gmail.com
                   </Text>
                   <Pressable
                     style={[
                       styles.modalBtn,
-                      { backgroundColor: theme.primary, marginTop: 20 },
+                      { backgroundColor: "pink", marginTop: 20 },
                     ]}
                     onPress={() => setShowHelpModal(false)}
                   >
-                    <Text style={{ color: theme.text.secondary }}>Close</Text>
+                    <Text style={{ color: "red" }}>Close</Text>
                   </Pressable>
                 </View>
               </View>
@@ -599,6 +590,68 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
               </View>
             )}
 
+            {/* About Section */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setShowAboutSection(!showAboutSection)}
+            >
+              <Text style={[styles.menuText, { color: theme.text.secondary }]}>
+                About
+              </Text>
+            </TouchableOpacity>
+
+            {showAboutSection && (
+              <View style={styles.subMenu}>
+                <TouchableOpacity onPress={() => setShowAboutModal(true)}>
+                  <Text style={[styles.subItem, { color: theme.text.body }]}>
+                    About SaveMyBill
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* About Modal */}
+            <Modal visible={showAboutModal} transparent animationType="slide">
+              <View style={styles.modalContainer}>
+                <View style={styles.popup}>
+                  {/* App Image */}
+                  <Image
+                    // source={require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/developer.jpg")}
+                    source={require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/logo.jpg")}
+                    style={{
+                      width: 200,
+                      height: 150,
+                      borderRadius: 20,
+                      marginBottom: 15,
+                    }}
+                  />
+
+                  {/* App Info */}
+                  <ScrollView style={{ maxHeight: 200 }}>
+                    <Text style={{ color: "#505050ff", lineHeight: 22 }}>
+                      • SaveMyBill is an app designed to help you store
+                      receipts, bills, and product details safely.{"\n\n"}• Our
+                      goal is to simplify personal record-keeping and never miss
+                      an expiry or warranty date.{"\n\n"}• This app is built
+                      with care to make managing your bills easy and organized.
+                      {"\n\n"}• Developed by Shreyash Sunil Phanse.
+                    </Text>
+                  </ScrollView>
+
+                  {/* Close Button */}
+                  <Pressable
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: "pink", marginTop: 20 },
+                    ]}
+                    onPress={() => setShowAboutModal(false)}
+                  >
+                    <Text style={{ color: "red" }}>Close</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+
             {/* Log Out */}
             <Pressable style={styles.logout} onPress={LogOut}>
               <Text style={{ fontSize: 30, fontWeight: "500", color: "white" }}>
@@ -663,6 +716,12 @@ const styles = StyleSheet.create({
     gap: 15,
     justifyContent: "center",
     marginTop: 10,
+  },
+  aboutImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 20,
+    marginBottom: 15,
   },
   modalBtn: {
     backgroundColor: "#003366",

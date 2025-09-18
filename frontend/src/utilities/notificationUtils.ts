@@ -2,11 +2,11 @@
 import * as Notifications from "expo-notifications";
 
 export async function scheduleBillReminder(
-  expiryDateString: string,
+  expiryDateTimeString: string,
   billId: string,
   storeName: string
 ) {
-  const d = new Date(expiryDateString);
+  const d = new Date(expiryDateTimeString);
   const secondsUntilExpiry = Math.max(
     1,
     Math.floor((d.getTime() - Date.now()) / 1000)
@@ -16,7 +16,7 @@ export async function scheduleBillReminder(
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "📌 Bill Expiry Reminder",
-        body: `Your bill for ${storeName} expires today.`,
+        body: `Your bill for ${storeName} expires at your selected time.`,
         data: { billId },
       },
       trigger: {

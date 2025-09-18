@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { PieChart } from "react-native-chart-kit";
-import { PIE_BASE_URL } from "D:/coding/Major_Projects/SaveMyBill/frontend/config/app";
+import { PIE_BASE_URL } from "config/app";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 
