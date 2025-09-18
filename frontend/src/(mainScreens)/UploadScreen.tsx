@@ -146,7 +146,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     }
   };
 
-  // Soft date validation
+  // Soft date validation with past date check
   const validateDateSoft = (d: string, m: string, y: string) => {
     let day = Number(d);
     let month = Number(m);
@@ -154,11 +154,13 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     const currentYear = new Date().getFullYear();
     const maxYear = currentYear + 6;
 
+    // Month & Year corrections
     if (month > 12) month = 12;
     if (month < 1) month = 1;
     if (year > maxYear) year = maxYear;
     if (year < currentYear) year = currentYear;
 
+    // Days correction
     let maxDays = 31;
     if ([4, 6, 9, 11].includes(month)) maxDays = 30;
     else if (month === 2) {
@@ -168,6 +170,18 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
 
     if (day > maxDays) day = maxDays;
     if (day < 1) day = 1;
+
+    // ✅ Check if date is before today
+    const enteredDate = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // ignore time, only compare date
+
+    if (enteredDate < today) {
+      Alert.alert("Invalid Date", "Expiry date cannot be in the past.");
+      day = today.getDate();
+      month = today.getMonth() + 1;
+      year = today.getFullYear();
+    }
 
     return {
       day: day.toString(),
@@ -434,7 +448,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
               <TouchableOpacity
                 style={[styles.uploadButton, { marginTop: 10, width: "100%" }]}
                 onPress={() => {
-                  // Convert selected time to 24-hour and schedule reminder
+                  // Convert selected time to 24-hour
                   let hour24 = Number(selectedHour);
                   if (selectedAmPm === "PM" && hour24 !== 12) hour24 += 12;
                   if (selectedAmPm === "AM" && hour24 === 12) hour24 = 0;
@@ -442,6 +456,18 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
                   const reminderDate = new Date(selectedDate);
                   reminderDate.setHours(hour24, Number(selectedMinute), 0);
 
+                  const now = new Date();
+
+                  // ✅ Validation: Reminder must always be in the future
+                  if (reminderDate <= now) {
+                    Alert.alert(
+                      "Invalid Time",
+                      "Reminder time must be in the future."
+                    );
+                    return;
+                  }
+
+                  // ✅ If valid, schedule reminder
                   scheduleBillReminder(
                     reminderDate.toISOString(),
                     uploadedBill.billId,

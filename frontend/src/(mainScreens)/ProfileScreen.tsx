@@ -87,9 +87,6 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
       await signOut(auth);
       // navigation.replace("AuthStack", { name: "Login" });
       setUser(null);
-      await AsyncStorage.removeItem("profileImage");
-      await AsyncStorage.removeItem("darkMode");
-      await AsyncStorage.removeItem("isNotificationOn");
     } catch (err) {
       console.log("Logout error: ", err);
       Alert.alert("Error", "Failed to log out. Try again.");
@@ -218,9 +215,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : {
-                          uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-                        }
+                      : require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/default-profile.png")
                   }
                   style={styles.img}
                 />
@@ -374,9 +369,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : {
-                          uri: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
-                        }
+                      : require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/default-profile.png")
                   }
                   style={styles.fullscreenImg}
                 />
