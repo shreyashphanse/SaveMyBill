@@ -13,7 +13,7 @@ export const saveFile = async (file: any, userId: string, billId: string) => {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     fs.writeFileSync(filePath, fileBuffer);
 
-    return filePath; // Later you can serve via express.static
+    return filePath;
   } catch (error) {
     throw new Error("Error saving file: " + error);
   }

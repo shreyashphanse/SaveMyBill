@@ -9,10 +9,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // 1️⃣ Delete all bills under this category
+    // 1️ Delete all bills under this category
     await Bill.deleteMany({ category: id });
 
-    // 2️⃣ Delete the category itself
+    // 2️ Delete the category itself
     const deletedCategory = await categoryModel.findByIdAndDelete(id);
 
     if (!deletedCategory) {

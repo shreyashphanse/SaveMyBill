@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const connectDB = async () => {
   try {
-    await mongoose.set("strictQuery", true); // optional but recommended
-    const conn = await mongoose.connect("mongodb://127.0.0.1:27017/savemybill");
+    await mongoose.set("strictQuery", true);
+
+    const conn = await mongoose.connect(process.env.MONGO_URI as string);
+
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ Error connecting to DB: ${error}`);
