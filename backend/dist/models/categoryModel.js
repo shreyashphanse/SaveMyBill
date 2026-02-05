@@ -39,4 +39,3 @@ const CategorySchema = new mongoose_1.Schema({
     userId: { type: String, required: true },
 }, { timestamps: true });
 exports.default = mongoose_1.default.model("Category", CategorySchema);
-//# sourceMappingURL=categoryModel.js.map

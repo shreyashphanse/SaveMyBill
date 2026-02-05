@@ -51,4 +51,3 @@ const BillSchema = new mongoose_1.Schema({
     createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 exports.Bill = mongoose_1.default.model("Bill", BillSchema);
-//# sourceMappingURL=billModel.js.map

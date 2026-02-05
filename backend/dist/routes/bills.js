@@ -31,4 +31,3 @@ router.get("/", billController_1.getBill);
 // Delete a bill
 router.delete("/:billId", billController_1.deleteBill);
 exports.default = router;
-//# sourceMappingURL=bills.js.map

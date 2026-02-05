@@ -1,16 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020", // Modern JS for Node
-    "module": "CommonJS", // Required for Node + ts-node
-    "moduleResolution": "node", // Resolve modules like Node
-    "rootDir": "./", // Your source files are in backend root
-    "outDir": "./dist", // Compiled JS output
-    "strict": true, // Enable all strict type-checking
-    "esModuleInterop": true, // Enable import/export interop
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true, // Skip type check for node_modules
-    "sourceMap": true // Generate source maps for debugging
+    "target": "ES2020",
+    "module": "commonjs",
+    "rootDir": ".",
+    "outDir": "dist",
+
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+
+    "strict": false,
+    "skipLibCheck": true,
+
+    "types": ["node"],
+    "lib": ["ES2020"]
   },
-  "include": ["./**/*.ts", "../frontend/src/utilities/firestoreSchema.ts"], // Include all ts files in backend
-  "exclude": ["node_modules", "dist"] // Exclude compiled output and node_modules
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

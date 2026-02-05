@@ -71,4 +71,3 @@ router.post("/", async (req, res) => {
     }
 });
 exports.default = router;
-//# sourceMappingURL=category.js.map

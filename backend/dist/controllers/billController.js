@@ -61,4 +61,3 @@ const uploadBill = async (req, res) => {
     }
 };
 exports.uploadBill = uploadBill;
-//# sourceMappingURL=billController.js.map

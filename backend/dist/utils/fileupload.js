@@ -22,4 +22,3 @@ const saveFile = async (file, userId, billId) => {
     }
 };
 exports.saveFile = saveFile;
-//# sourceMappingURL=fileupload.js.map
