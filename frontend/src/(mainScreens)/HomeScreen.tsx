@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomNavBar from "../components/BottomNavBar";
 import { useTheme } from "../(extraScreens)/ThemeContext";
 import { useUser } from "../(extraScreens)/UserContext";
-import { API_BASE_URL } from "../../../config/app";
+import { API_BASE_URL } from "../../config/app";
 
 const { width } = Dimensions.get("window");
 const screenWidth = width;

@@ -15,7 +15,7 @@ import {
   BackHandler,
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
-import { API_BASE_URL } from "../../../config/app";
+import { API_BASE_URL } from "../../config/app";
 import { useCategory } from "../components/categoryContext";
 
 type Category = {

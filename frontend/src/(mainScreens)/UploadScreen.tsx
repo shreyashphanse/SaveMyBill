@@ -16,7 +16,7 @@ import { useTheme } from "../(extraScreens)/ThemeContext";
 import BottomNavBar from "../components/BottomNavBar";
 import { auth } from "../firebaseConfig";
 import { scheduleBillReminder } from "../utilities/notificationUtils";
-import { API_BASE_URL, OCR_BASE_URL } from "../../../config/app";
+import { API_BASE_URL, OCR_BASE_URL } from "../../config/app";
 
 export default function UploadScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { API_BASE_URL } from "../../../config/app";
+import { API_BASE_URL } from "../../config/app";
 import { useUser } from "../(extraScreens)/UserContext";
 
 type Category = {
