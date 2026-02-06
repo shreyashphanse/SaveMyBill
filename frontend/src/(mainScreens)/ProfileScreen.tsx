@@ -215,7 +215,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/default-profile.png")
+                      : require("../../assets/default-profile.png")
                   }
                   style={styles.img}
                 />
