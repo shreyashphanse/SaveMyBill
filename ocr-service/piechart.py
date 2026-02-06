@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 
 app = Flask(__name__)
 
-# MongoDB connection (update URI as per your DB)
+# MongoDB connection 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["savemybill"]  # your DB name
 bills_collection = db["bills"]  # collection where bills are stored
@@ -38,17 +38,17 @@ def piechart():
         ]
 
         result = list(bills_collection.aggregate(pipeline))
-        print("AGGREGATION RESULT:", result)  # <-- debug here
+        print("AGGREGATION RESULT:", result)  # debug 
 
         categories_collection = db["categories"]
         categories = {str(c["_id"]): c["name"] for c in categories_collection.find({"userId": user_id})}
-        print("CATEGORIES DICT:", categories)  # <-- debug here
+        print("CATEGORIES DICT:", categories)  # here
 
         data = [
             {"category": categories.get(str(r["_id"]), "Unknown"), "total": r["total"]}
             for r in result
         ]
-        print("FINAL DATA TO SEND:", data)  # <-- debug here
+        print("FINAL DATA TO SEND:", data)  # debug
 
         return jsonify({"success": True, "data": data})
 

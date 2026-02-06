@@ -11,7 +11,6 @@ app = Flask(__name__)
 
 
 def extract_amount_and_date(image_bytes):
-    """Extract amount and expiry date from uploaded image using OCR."""
     # Convert bytes to OpenCV image
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -23,7 +22,7 @@ def extract_amount_and_date(image_bytes):
     # OCR text extraction
     text = pytesseract.image_to_string(gray)
 
-    # Extract amount (₹ or numbers with decimals)
+    # Extract amount
     amount = 0.0
     for line in text.split("\n"):
         if "total" in line.lower() or "₹" in line or "amount" in line.lower():
@@ -59,7 +58,3 @@ def ocr_endpoint():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
-
-# Example usage:
-# D:\coding\Major_Projects\SaveMyBill\ocr-service\puc.jpg
-# curl -X POST -F "file=@D:\coding\Major_Projects\SaveMyBill\ocr-service\puc.jpg" http://localhost:5001/ocr
