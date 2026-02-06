@@ -17,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BottomNavBar from "../components/BottomNavBar";
 import { useTheme } from "../(extraScreens)/ThemeContext";
 import { useUser } from "../(extraScreens)/UserContext";
-import { API_BASE_URL } from "../../config/app";
+import { API_BASE_URL } from "../../../config/app";
 
 const { width } = Dimensions.get("window");
 const screenWidth = width;
@@ -72,7 +72,7 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
           .sort(
             (a: any, b: any) =>
               new Date(b.expiryDate).getTime() -
-              new Date(a.expiryDate).getTime()
+              new Date(a.expiryDate).getTime(),
           )
           .slice(0, 10);
 
@@ -116,7 +116,7 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
             .sort(
               (a: any, b: any) =>
                 new Date(b.expiryDate).getTime() -
-                new Date(a.expiryDate).getTime()
+                new Date(a.expiryDate).getTime(),
             )
             .slice(0, 10);
           const mappedBills = sorted.map((bill: any) => ({
@@ -140,7 +140,7 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
 
   const totalSpentThisMonth = `₹ ${allBills.reduce(
     (acc, b) => acc + Number(b.amount),
-    0
+    0,
   )}`;
   const numBillsUploaded = `${totalBillsCount}`;
   const cardsData = [

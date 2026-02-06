@@ -120,7 +120,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
     try {
       const credential = EmailAuthProvider.credential(
         auth.currentUser.email!,
-        currentPasswordInput
+        currentPasswordInput,
       );
       await reauthenticateWithCredential(auth.currentUser, credential);
       await firebaseUpdatePassword(auth.currentUser, newPasswordInput);
@@ -290,7 +290,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                         } catch (error: any) {
                           Alert.alert(
                             "Error",
-                            error.message || "Failed to update name."
+                            error.message || "Failed to update name.",
                           );
                         }
                       }}

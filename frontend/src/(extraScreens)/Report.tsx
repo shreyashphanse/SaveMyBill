@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useCategory } from "../components/categoryContext";
-import { PIE_BASE_URL } from "../../config/app";
+import { PIE_BASE_URL } from "../../../config/app";
 
 import {
   View,

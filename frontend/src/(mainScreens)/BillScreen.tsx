@@ -3,7 +3,7 @@ import BottomNavBar from "../components/BottomNavBar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useTheme } from "../(extraScreens)/ThemeContext";
 import { BackHandler } from "react-native";
-import { API_BASE_URL } from "../../config/app";
+import { API_BASE_URL } from "../../../config/app";
 import {
   View,
   Text,
