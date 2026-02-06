@@ -76,7 +76,7 @@ export default function App() {
         if (billId) {
           console.log("User tapped notification for bill:", billId);
         }
-      }
+      },
     );
 
     return () => subscription.remove();

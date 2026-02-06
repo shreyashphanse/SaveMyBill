@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../firebaseConfig";
 import { useUser } from "../(extraScreens)/UserContext"; // 👈 import context
 
 export default function Login({ navigation }: any) {
