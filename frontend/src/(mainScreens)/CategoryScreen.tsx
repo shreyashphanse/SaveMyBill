@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { API_BASE_URL } from "../../config/app";
-import { useCategory } from "src/components/categoryContext";
+import { useCategory } from "../components/categoryContext";
 
 type Category = {
   _id: string;
@@ -56,7 +56,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/api/categories?userId=${userId}`
+        `${API_BASE_URL}/api/categories?userId=${userId}`,
       );
       const data = await res.json();
       const raw = Array.isArray(data?.categories) ? data.categories : [];
@@ -99,7 +99,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
 
   const toggleSelection = (id: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   };
 
@@ -107,7 +107,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
     if (selectedCategories.length === 0) {
       Alert.alert(
         "No categories selected",
-        "Please select categories to delete."
+        "Please select categories to delete.",
       );
       return;
     }
@@ -116,7 +116,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
       for (const categoryId of selectedCategories) {
         // 1️⃣ Fetch bills under this category
         const resBills = await fetch(
-          `${API_BASE_URL}/api/bills?category=${categoryId}`
+          `${API_BASE_URL}/api/bills?category=${categoryId}`,
         );
         const data = await resBills.json();
         const bills = data.bills || [];
@@ -136,7 +136,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
 
       // 4️⃣ Update local state
       setCategories((prev) =>
-        prev.filter((cat) => !selectedCategories.includes(cat._id))
+        prev.filter((cat) => !selectedCategories.includes(cat._id)),
       );
       setSelectedCategories([]);
       setIsSelectionMode(false);
@@ -147,7 +147,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
       console.error("Error deleting categories and bills:", err);
       Alert.alert(
         "Error",
-        "Failed to delete selected categories or their bills"
+        "Failed to delete selected categories or their bills",
       );
     }
   };
@@ -205,7 +205,7 @@ export default function CategoriesScreen({ navigation }: { navigation: any }) {
     };
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      backAction
+      backAction,
     );
     return () => backHandler.remove();
   }, [isSelectionMode]);

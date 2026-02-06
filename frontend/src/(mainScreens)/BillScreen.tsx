@@ -17,7 +17,7 @@ import {
 } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useUser } from "../(extraScreens)/UserContext";
-import { useCategory } from "src/components/categoryContext";
+import { useCategory } from "../components/categoryContext";
 
 export default function BillScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
@@ -111,7 +111,9 @@ export default function BillScreen({ navigation }: { navigation: any }) {
   // Toggle selection
   const toggleSelection = (id: string) => {
     setSelectedBills((prev) =>
-      prev.includes(id) ? prev.filter((billId) => billId !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((billId) => billId !== id)
+        : [...prev, id],
     );
   };
 
@@ -129,7 +131,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
         if (!res.ok) throw new Error(`Failed to delete bill ${id}`);
       }
       setBills((prev) =>
-        prev.filter((bill) => !selectedBills.includes(bill.id))
+        prev.filter((bill) => !selectedBills.includes(bill.id)),
       );
       setSelectedBills([]);
       setIsSelectionMode(false);
@@ -155,7 +157,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
         (bill) =>
           bill.title.toLowerCase().includes(lowerSearch) ||
           bill.categoryName.toLowerCase().includes(lowerSearch) ||
-          bill.amount.toString().includes(lowerSearch)
+          bill.amount.toString().includes(lowerSearch),
       );
     }
 
@@ -166,7 +168,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
       data.sort(
         (a, b) =>
           new Date(b.date.split("/").reverse().join("-")).getTime() -
-          new Date(a.date.split("/").reverse().join("-")).getTime()
+          new Date(a.date.split("/").reverse().join("-")).getTime(),
       );
 
     return data;
@@ -184,7 +186,7 @@ export default function BillScreen({ navigation }: { navigation: any }) {
     };
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      backAction
+      backAction,
     );
     return () => backHandler.remove();
   }, [isSelectionMode]);

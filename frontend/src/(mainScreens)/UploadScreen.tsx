@@ -14,10 +14,9 @@ import * as DocumentPicker from "expo-document-picker";
 import { onAuthStateChanged } from "firebase/auth";
 import { useTheme } from "../(extraScreens)/ThemeContext";
 import BottomNavBar from "../components/BottomNavBar";
-import { API_BASE_URL } from "config/app";
 import { auth } from "../firebaseConfig";
 import { scheduleBillReminder } from "../utilities/notificationUtils";
-import { OCR_BASE_URL } from "config/app";
+import { API_BASE_URL, OCR_BASE_URL } from "../../config/app";
 
 export default function UploadScreen({ navigation }: { navigation: any }) {
   const { theme } = useTheme();
@@ -72,7 +71,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
     const fetchCategories = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/categories?userId=${userId}`
+          `${API_BASE_URL}/api/categories?userId=${userId}`,
         );
         const data = await res.json();
         if (res.ok) {
@@ -207,7 +206,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
 
     const expiryDate = `${day}/${month}/${year}`;
     const selectedCategoryObj = items.find(
-      (item) => item.value === selectedCategory
+      (item) => item.value === selectedCategory,
     );
 
     const formData = new FormData();
@@ -252,13 +251,13 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
                   const d = new Date(
                     Number(parts[2]),
                     Number(parts[1]) - 1,
-                    Number(parts[0])
+                    Number(parts[0]),
                   );
                   setSelectedDate(d);
                   setShowTimeDropdown(true);
                 },
               },
-            ]
+            ],
           );
 
           // Reset fields
@@ -462,7 +461,7 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
                   if (reminderDate <= now) {
                     Alert.alert(
                       "Invalid Time",
-                      "Reminder time must be in the future."
+                      "Reminder time must be in the future.",
                     );
                     return;
                   }
@@ -471,12 +470,12 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
                   scheduleBillReminder(
                     reminderDate.toISOString(),
                     uploadedBill.billId,
-                    uploadedBill.storeName
+                    uploadedBill.storeName,
                   );
 
                   Alert.alert(
                     "Reminder Set",
-                    `Reminder scheduled for ${reminderDate.toLocaleString()}`
+                    `Reminder scheduled for ${reminderDate.toLocaleString()}`,
                   );
                   setShowTimeDropdown(false);
                 }}

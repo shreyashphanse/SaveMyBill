@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useCategory } from "src/components/categoryContext";
+import { useCategory } from "../components/categoryContext";
+import { PIE_BASE_URL } from "../../config/app";
 
 import {
   View,
@@ -9,7 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { PieChart } from "react-native-chart-kit";
-import { PIE_BASE_URL } from "config/app";
+// import { PIE_BASE_URL } from "config/app";
 import { auth } from "../firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 

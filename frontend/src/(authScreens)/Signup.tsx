@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, Text, TouchableOpacity } from "react-native";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "src/firebaseConfig";
+import { auth } from "../../firebaseConfig";
 
 export default function Signup({ navigation }: any) {
   const [name, setName] = useState(""); // 👈 new state for name
@@ -15,7 +15,7 @@ export default function Signup({ navigation }: any) {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
       );
 
       await updateProfile(userCredential.user, {
