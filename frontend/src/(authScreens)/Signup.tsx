@@ -58,7 +58,7 @@ export default function Signup({ navigation }: any) {
         Sign-Up
       </Text>
 
-      {/* 👇 Name input */}
+      {/*  Name input */}
       <TextInput
         placeholder="Enter your name"
         value={name}

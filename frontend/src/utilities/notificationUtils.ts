@@ -8,7 +8,7 @@ export async function scheduleBillReminder(
   billId: string,
   storeName: string
 ) {
-  // ✅ Check notification preference first
+  //  Check notification preference first
   const notifPref = await AsyncStorage.getItem("isNotificationOn");
   if (notifPref === "false") {
     Alert.alert(

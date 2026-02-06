@@ -18,7 +18,7 @@ import Report from "./src/(extraScreens)/Report";
 
 const Stack = createNativeStackNavigator();
 
-// A small wrapper to decide which stack to show based on logged-in user
+// A small wrapper decide which stack to show based on logged-in user
 const MainNavigator = () => {
   const { user } = useUser();
 
@@ -41,7 +41,7 @@ const MainNavigator = () => {
 
 export default function App() {
   useEffect(() => {
-    // 🔹 Notification handler
+    //  Notification handler
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -52,7 +52,7 @@ export default function App() {
       }),
     });
 
-    // 🔹 Android channel
+    //  Android channel
     if (Platform.OS === "android") {
       Notifications.setNotificationChannelAsync("default", {
         name: "default",
@@ -60,7 +60,7 @@ export default function App() {
       });
     }
 
-    // 🔹 Ask for permissions
+    //  Ask for permissions
     const getPermissions = async () => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
@@ -69,14 +69,12 @@ export default function App() {
     };
     getPermissions();
 
-    // 🔹 Handle notification clicks
+    //  Handle notification clicks
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const billId = response.notification.request.content.data.billId;
         if (billId) {
           console.log("User tapped notification for bill:", billId);
-          // ⚠️ TODO: add navigation reference to open BillScreen
-          // Example: navigation.navigate("Bill", { id: billId });
         }
       }
     );
