@@ -215,7 +215,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : require("../../assets/default-profile.png")
+                      : require("../../assets/default_profile_image.png")
                   }
                   style={styles.img}
                 />
@@ -369,7 +369,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : require("../../assets/default_profile.png")
+                      : require("../../assets/default_profile_image.png")
                   }
                   style={styles.fullscreenImg}
                 />
