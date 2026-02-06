@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { API_BASE_URL } from "D:/coding/Major_Projects/SaveMyBill/frontend/config/app";
-import { useUser } from "src/(extraScreens)/UserContext";
+import { API_BASE_URL } from "../../../config/app.ts";
+import { useUser } from "../(extraScreens)/UserContext";
 
 type Category = {
   _id: string;
@@ -21,7 +21,7 @@ type CategoryContextType = {
 };
 
 const CategoryContext = createContext<CategoryContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -32,7 +32,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryDict, setCategoryDict] = useState<{ [label: string]: string }>(
-    {}
+    {},
   );
   const [idToCategoryDict, setIdToCategoryDict] = useState<{
     [id: string]: string;
