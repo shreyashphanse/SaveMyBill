@@ -369,7 +369,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   source={
                     profileImage
                       ? { uri: profileImage }
-                      : require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/default-profile.png")
+                      : require("../../assets/default-profile.png")
                   }
                   style={styles.fullscreenImg}
                 />
@@ -610,7 +610,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   {/* App Image */}
                   <Image
                     // source={require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/developer.jpg")}
-                    source={require("D:/coding/Major_Projects/SaveMyBill/frontend/assets/logo.jpg")}
+                    source={require("../../assets/logo.jpg")}
                     style={{
                       width: 200,
                       height: 150,
