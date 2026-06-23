@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { connectDB } from "./config/db";
 import billRoutes from "./routes/bills";
 import categoryRouter from "./routes/category";
+import piechartRoutes from "./routes/piechart";
 import path from "path";
 
 // Load environment variables
@@ -21,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use("/api/bills", billRoutes);
 app.use("/api/categories", categoryRouter);
+app.use("/api/piechart", piechartRoutes);
 
 // ✅ Health check route
 app.get("/", (req: Request, res: Response) => {
