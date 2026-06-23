@@ -56,6 +56,13 @@ def ocr_endpoint():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route("/")
+def home():
+    return jsonify({
+        "success": True,
+        "message": "OCR server running"
+    })
+
 
 
 if __name__ == "__main__":
