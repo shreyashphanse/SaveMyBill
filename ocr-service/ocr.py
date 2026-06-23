@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 import pytesseract
 import cv2
@@ -56,5 +57,9 @@ def ocr_endpoint():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5001))
+    )
