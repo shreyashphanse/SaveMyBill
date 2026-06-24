@@ -16,6 +16,6 @@ const host = devHost || fallbackHost;
 // const host = fallbackHost || devHost;
 
 export const API_BASE_URL = "https://savemybill-backend.onrender.com";
-export const OCR_BASE_URL = "https://savemybill-ocr.onrender.com";
+export const OCR_BASE_URL = "https://ocr-service-dockerfile.onrender.com";
 export const PIE_BASE_URL =
   "https://savemybill-backend.onrender.com/api/piechart";
