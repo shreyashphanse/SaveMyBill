@@ -5,9 +5,6 @@ import cv2
 import numpy as np
 import re
 
-# Configure pytesseract path on Windows
-# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 app = Flask(__name__)
 
 
@@ -16,24 +13,49 @@ def extract_amount_and_date(image_bytes):
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    # Convert to grayscale & apply threshold for better OCR
+    if img is None:
+        raise Exception("Could not decode image")
+
+    # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+    # Apply threshold
+    gray = cv2.threshold(
+        gray,
+        0,
+        255,
+        cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )[1]
+
+    print("Starting OCR...")
 
     # OCR text extraction
     text = pytesseract.image_to_string(gray)
 
+    print("OCR TEXT:")
+    print(text)
+
     # Extract amount
     amount = 0.0
+
     for line in text.split("\n"):
-        if "total" in line.lower() or "₹" in line or "amount" in line.lower():
+        if (
+            "total" in line.lower()
+            or "₹" in line
+            or "amount" in line.lower()
+        ):
             nums = re.findall(r"\d+(?:\.\d{1,2})?", line)
+
             if nums:
                 amount = float(nums[-1])
                 break
 
-    # Extract date (DD/MM/YYYY or similar)
-    date_matches = re.findall(r"(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})", text)
+    # Extract date
+    date_matches = re.findall(
+        r"(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})",
+        text
+    )
+
     expiry_date = date_matches[-1] if date_matches else ""
 
     return {
@@ -42,20 +64,6 @@ def extract_amount_and_date(image_bytes):
     }
 
 
-@app.route("/ocr", methods=["POST"])
-def ocr_endpoint():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file = request.files["file"]
-    image_bytes = file.read()
-
-    try:
-        result = extract_amount_and_date(image_bytes)
-        return jsonify({"success": True, "data": result})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
 @app.route("/")
 def home():
     return jsonify({
@@ -63,6 +71,46 @@ def home():
         "message": "OCR server running"
     })
 
+
+@app.route("/ocr", methods=["POST"])
+def ocr_endpoint():
+
+    print("========== OCR REQUEST RECEIVED ==========")
+
+    if "file" not in request.files:
+        print("ERROR: No file uploaded")
+
+        return jsonify({
+            "success": False,
+            "error": "No file uploaded"
+        }), 400
+
+    file = request.files["file"]
+
+    print(f"File received: {file.filename}")
+
+    image_bytes = file.read()
+
+    try:
+        result = extract_amount_and_date(image_bytes)
+
+        print("OCR SUCCESS")
+        print(result)
+
+        return jsonify({
+            "success": True,
+            "data": result
+        })
+
+    except Exception as e:
+
+        print("OCR ERROR:")
+        print(str(e))
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 if __name__ == "__main__":
