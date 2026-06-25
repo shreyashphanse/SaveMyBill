@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "SaveMyBill",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
@@ -15,16 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
-      "permissions": [
-        "NOTIFICATIONS",
-        "NOTIFICATIONS"
-      ],
+      "permissions": ["NOTIFICATIONS", "NOTIFICATIONS"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
