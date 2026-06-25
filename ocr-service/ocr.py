@@ -4,11 +4,15 @@ import pytesseract
 import cv2
 import numpy as np
 import re
+import shutil
+
 
 app = Flask(__name__)
 
 
 def extract_amount_and_date(image_bytes):
+    print("Tesseract location:", shutil.which("tesseract"))
+
     # Convert bytes to OpenCV image
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)

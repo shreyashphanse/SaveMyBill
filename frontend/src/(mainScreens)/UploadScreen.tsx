@@ -297,14 +297,18 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           </TouchableOpacity>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text.primary }]}
             placeholder="Enter Bill Title"
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
             value={title}
             onChangeText={setTitle}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text.primary }]}
             placeholder="Enter Bill Amount"
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
@@ -326,17 +330,28 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
 
           <Text style={{ padding: 5, fontSize: 20 }}>Expiry Date:</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: "#f0f0f0" }]}
+            style={[
+              styles.input,
+              { backgroundColor: "#f0f0f0", color: theme.text.primary },
+            ]}
             value={day && month && year ? `${day}/${month}/${year}` : ""}
             editable={false}
             placeholder="Detected Expiry Date"
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
           />
 
           <View style={styles.dateRow}>
             <TextInput
-              style={[styles.input, styles.dateInput]}
+              style={[
+                styles.input,
+                styles.dateInput,
+                { color: theme.text.primary },
+              ]}
               placeholder="DD"
               keyboardType="numeric"
+              placeholderTextColor="#888"
+              selectionColor={theme.text.primary}
               maxLength={2}
               value={day}
               onChangeText={setDay}
@@ -349,9 +364,16 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
             />
 
             <TextInput
-              style={[styles.input, styles.dateInput]}
+              style={[
+                styles.input,
+                styles.dateInput,
+                ,
+                { color: theme.text.primary },
+              ]}
               placeholder="MM"
               keyboardType="numeric"
+              placeholderTextColor="#888"
+              selectionColor={theme.text.primary}
               maxLength={2}
               value={month}
               onChangeText={setMonth}
@@ -364,9 +386,15 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
             />
 
             <TextInput
-              style={[styles.input, styles.dateInput, { flex: 2 }]}
+              style={[
+                styles.input,
+                styles.dateInput,
+                { flex: 2, color: theme.text.primary },
+              ]}
               placeholder="YYYY"
               keyboardType="numeric"
+              placeholderTextColor="#888"
+              selectionColor={theme.text.primary}
               maxLength={4}
               value={year}
               onChangeText={setYear}
@@ -380,14 +408,18 @@ export default function UploadScreen({ navigation }: { navigation: any }) {
           </View>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text.primary }]}
             placeholder="Description (optional)"
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
             value={description}
             onChangeText={setDescription}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text.primary }]}
             placeholder="Enter Store Name"
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
             value={storeName}
             onChangeText={setStoreName}
           />

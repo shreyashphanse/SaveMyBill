@@ -100,9 +100,20 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
         allowsEditing: true,
         quality: 1,
       });
-      if (!result.canceled) setProfileImagePersist(result.assets[0].uri);
+
+      console.log("ImagePicker Result:", result);
+
+      if (!result.canceled) {
+        console.log("Selected URI:", result.assets?.[0]?.uri);
+
+        await setProfileImagePersist(result.assets[0].uri);
+
+        console.log("Image saved to AsyncStorage");
+      } else {
+        console.log("User cancelled image picker");
+      }
     } catch (error) {
-      console.log("ImagePicker Error: ", error);
+      console.log("ImagePicker Error:", error);
     }
   };
 
@@ -140,11 +151,9 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
     const loadUserData = async () => {
       const storedProfileImage = await AsyncStorage.getItem("profileImage");
       const storedNotif = await AsyncStorage.getItem("isNotificationOn");
-      const storedDarkMode = await AsyncStorage.getItem("darkMode");
 
       if (storedProfileImage) setProfileImage(storedProfileImage);
       if (storedNotif) setIsNotificationOn(JSON.parse(storedNotif));
-      if (storedDarkMode) setIsDarkMode(JSON.parse(storedDarkMode));
 
       // ✅ Always sync from Firebase first
       if (auth.currentUser) {
@@ -253,9 +262,17 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   <Text style={styles.popupTitle}>Edit Profile</Text>
                   <TextInput
                     placeholder="Enter Profile Name"
+                    placeholderTextColor="#888"
+                    selectionColor={theme.text.primary}
                     value={newName}
                     onChangeText={setNewName}
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        color: theme.text.primary,
+                        borderColor: theme.text.primary,
+                      },
+                    ]}
                   />
                   <View style={{ flexDirection: "row", gap: 20 }}>
                     {/* Cancel Button */}
@@ -320,17 +337,33 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
                   <Text style={styles.popupTitle}>Change Password</Text>
                   <TextInput
                     placeholder="Old Password"
+                    placeholderTextColor="#888"
+                    selectionColor={theme.text.primary}
                     value={currentPasswordInput}
                     onChangeText={setCurrentPasswordInput}
                     secureTextEntry
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        color: theme.text.primary,
+                        borderColor: theme.text.primary,
+                      },
+                    ]}
                   />
                   <TextInput
                     placeholder="New Password"
+                    placeholderTextColor="#888"
+                    selectionColor={theme.text.primary}
                     value={newPasswordInput}
                     onChangeText={setNewPasswordInput}
                     secureTextEntry
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        color: theme.text.primary,
+                        borderColor: theme.text.primary,
+                      },
+                    ]}
                   />
                   <View style={{ flexDirection: "row", gap: 20 }}>
                     {/* Cancel Button */}

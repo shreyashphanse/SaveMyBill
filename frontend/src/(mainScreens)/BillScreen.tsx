@@ -202,9 +202,12 @@ export default function BillScreen({ navigation }: { navigation: any }) {
             My Bills{" "}
           </Text>
 
+
           <TextInput
-            style={styles.searchBar}
+            style={[styles.searchBar,{color: theme.text.primary}]}
             placeholder="Search bills..."
+            placeholderTextColor="#888"
+            selectionColor={theme.text.primary}
             value={search}
             onChangeText={setSearch}
           />

@@ -33,8 +33,22 @@ export default function Report({ navigation }: { navigation: any }) {
 
     const fetchChartData = async () => {
       try {
-        const res = await fetch(`${PIE_BASE_URL}/piechart?userId=${userId}`);
+        console.log("========== REPORT DEBUG ==========");
+        console.log("User ID:", userId);
+        console.log("PIE_BASE_URL:", PIE_BASE_URL);
+
+        const url = `${PIE_BASE_URL}?userId=${userId}`;
+
+        console.log("Fetching:", url);
+
+        const res = await fetch(url);
+
+        console.log("Status:", res.status);
+
         const data = await res.json();
+
+        console.log("Response:");
+        console.log(JSON.stringify(data, null, 2));
 
         if (data.success) {
           const colors = [
@@ -44,19 +58,25 @@ export default function Report({ navigation }: { navigation: any }) {
             "#8E44AD",
             "#2ECC71",
           ];
+
           const chart = data.data.map((item: any, index: number) => ({
-            name: item.category, // mapping id -> name
+            name: item.category,
             population: item.total,
             color: colors[index % colors.length],
             legendFontColor: "#333",
             legendFontSize: 15,
           }));
+
+          console.log("Chart Data:");
+          console.log(chart);
+
           setChartData(chart);
         } else {
-          console.error("Pie chart fetch error:", data.error);
+          console.log("Backend Error:", data.error);
         }
       } catch (err) {
-        console.error("Pie chart fetch failed:", err);
+        console.log("Fetch Error:");
+        console.log(err);
       } finally {
         setLoading(false);
       }

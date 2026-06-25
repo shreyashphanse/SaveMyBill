@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, TextInput, Text, TouchableOpacity } from "react-native";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../firebaseConfig";
+import { useTheme } from "../(extraScreens)/ThemeContext";
 
 export default function Signup({ navigation }: any) {
   const [name, setName] = useState(""); // 👈 new state for name
@@ -9,6 +10,7 @@ export default function Signup({ navigation }: any) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { theme } = useTheme();
 
   const handleSignup = async () => {
     try {
@@ -61,6 +63,8 @@ export default function Signup({ navigation }: any) {
       {/*  Name input */}
       <TextInput
         placeholder="Enter your name"
+        placeholderTextColor="#888"
+        selectionColor={theme.text.primary}
         value={name}
         onChangeText={setName}
         style={{
@@ -69,11 +73,15 @@ export default function Signup({ navigation }: any) {
           padding: 10,
           marginBottom: 10,
           width: "100%",
+          color: theme.text.primary,
+          borderColor: theme.text.primary,
         }}
       />
 
       <TextInput
         placeholder="Enter your email"
+        placeholderTextColor="#888"
+        selectionColor={theme.text.primary}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -84,6 +92,8 @@ export default function Signup({ navigation }: any) {
           padding: 10,
           marginBottom: 10,
           width: "100%",
+          color: theme.text.primary,
+          borderColor: theme.text.primary,
         }}
       />
 
@@ -99,12 +109,15 @@ export default function Signup({ navigation }: any) {
       >
         <TextInput
           placeholder="Enter your password"
+          placeholderTextColor="#888"
+          selectionColor={theme.text.primary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
           style={{
             flex: 1,
             paddingVertical: 10,
+            color: theme.text.primary,
           }}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>

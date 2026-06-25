@@ -1,4 +1,7 @@
-import React, { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./src/firebaseConfig";
+import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { ThemeProvider } from "./src/(extraScreens)/ThemeContext";
 import { NavigationContainer } from "@react-navigation/native";
@@ -20,10 +23,41 @@ const Stack = createNativeStackNavigator();
 
 // A small wrapper decide which stack to show based on logged-in user
 const MainNavigator = () => {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
+  const [loading, setLoading] = useState(true);
 
-  if (!user) return <AuthStack />; // User not logged in → Auth screens
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+        });
+      } else {
+        setUser(null);
+      }
 
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#003366" />
+      </View>
+    );
+  }
+
+  if (!user) return <AuthStack />;
   return (
     <Stack.Navigator
       initialRouteName="Home"

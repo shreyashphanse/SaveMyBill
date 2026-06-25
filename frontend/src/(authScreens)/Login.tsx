@@ -9,13 +9,14 @@ import {
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
-import { useUser } from "../(extraScreens)/UserContext"; // 👈 import context
-
+import { useUser } from "../(extraScreens)/UserContext";
+import { useTheme } from "../(extraScreens)/ThemeContext";
 export default function Login({ navigation }: any) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const { setUser } = useUser();
+  const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
@@ -74,6 +75,8 @@ export default function Login({ navigation }: any) {
       </Text>
       <TextInput
         placeholder="Enter your email"
+        placeholderTextColor="#888"
+        selectionColor={theme.text.primary}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -84,6 +87,8 @@ export default function Login({ navigation }: any) {
           padding: 10,
           marginBottom: 10,
           width: "100%",
+          color: theme.text.primary,
+          borderColor: theme.text.primary,
         }}
       />
       <View
@@ -98,12 +103,15 @@ export default function Login({ navigation }: any) {
       >
         <TextInput
           placeholder="Enter your password"
+          placeholderTextColor="#888"
+          selectionColor={theme.text.primary}
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
           style={{
             flex: 1,
             paddingVertical: 10,
+            color: theme.text.primary,
           }}
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>

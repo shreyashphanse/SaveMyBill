@@ -219,8 +219,10 @@ export default function HomeScreen({ navigation, fallbackName = "User" }: any) {
 
                 <View style={styles.searchRow}>
                   <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, { color: theme.text.primary }]}
                     placeholder="Search bills, categories..."
+                    placeholderTextColor="#888"
+                    selectionColor={theme.text.primary}
                     value={search}
                     onChangeText={setSearch}
                     returnKeyType="search"
