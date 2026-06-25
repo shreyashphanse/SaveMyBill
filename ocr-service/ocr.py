@@ -47,6 +47,9 @@ def extract_amount_and_date(image_bytes):
             "total" in line.lower()
             or "₹" in line
             or "amount" in line.lower()
+            or "price" in line.lower()
+            or "cost" in line.lower()
+            or "balance" in line.lower()
         ):
             nums = re.findall(r"\d+(?:\.\d{1,2})?", line)
 
