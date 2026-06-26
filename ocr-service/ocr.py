@@ -78,7 +78,15 @@ def home():
         "message": "OCR server running"
     })
 
-
+@app.route("/health")
+def health():
+    return jsonify({
+        "success": True,
+        "service": "SaveMyBill OCR",
+        "backend": "awake",
+        "status": "healthy"
+    }), 200
+    
 @app.route("/ocr", methods=["POST"])
 def ocr_endpoint():
 
