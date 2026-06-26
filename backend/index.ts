@@ -24,7 +24,7 @@ app.use(express.json());
 app.use("/api/bills", billRoutes);
 app.use("/api/categories", categoryRouter);
 app.use("/api/piechart", piechartRoutes);
-app.use("/health", healthRoutes);
+app.use("/api/health", healthRoutes);
 
 // ✅ Health check route
 app.get("/", (req: Request, res: Response) => {
